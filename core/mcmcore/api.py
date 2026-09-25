@@ -897,6 +897,89 @@ def create_app(project_root: Path) -> FastAPI:
         data["stale_runs"] = rs.staleness(store().root)
         return data
 
+    @app.post("/api/experiments")
+    def create_experiment(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """新建一个实验协议。
+
+        实验页此前只列已有实验，空项目下就是一句"还没有定义实验" ——
+        没有任何新建入口，后端也只有"运行"没有"创建"。新用户因此
+        永远跑不出第一个结果，整条结果追踪链在这里断掉。
+        """
+        from .schemas import Experiment, Varied
+
+        st = store()
+        label = str(payload.get("label") or "").strip()
+        kind = payload.get("kind") or "other"
+        allowed_kinds = [e.value for e in Experiment.model_fields["kind"].annotation]
+        if kind not in allowed_kinds:
+            raise HTTPException(
+                422, f"实验类型 {kind!r} 不认识。可选：{'、'.join(allowed_kinds)}。")
+
+        eid = str(payload.get("id") or "").strip()
+        if not eid:
+            # 编号按已有数量递增，和 EXP-001 这种写法保持一致
+            n = len(st.list_experiments()) + 1
+            while True:
+                eid = f"EXP-{n:03d}"
+                if not (st.layout.experiment_path(eid) / "experiment.yaml").is_file():
+                    break
+                n += 1
+        elif (st.layout.experiment_path(eid) / "experiment.yaml").is_file():
+            raise HTTPException(409, f"实验 {eid} 已存在。")
+
+        # 变动参数：面板传来的是 [{name, values|range, step, unit}]
+        varied: List[Varied] = []
+        for v in (payload.get("varied") or []):
+            if not isinstance(v, dict) or not str(v.get("name") or "").strip():
+                continue
+            kw: Dict[str, Any] = {"name": str(v["name"]).strip()}
+            if v.get("values"):
+                kw["values"] = v["values"]
+            if v.get("range"):
+                kw["range"] = v["range"]
+            if v.get("step") is not None:
+                kw["step"] = v["step"]
+            if v.get("unit"):
+                kw["unit"] = v["unit"]
+            if "values" not in kw and "range" not in kw:
+                raise HTTPException(
+                    422, f"变动参数「{kw['name']}」要给出取值列表或区间，否则没法展开试验。")
+            varied.append(Varied(**kw))
+
+        try:
+            exp = Experiment(
+                id=eid, label=label or None, kind=kind,
+                dataset_id=payload.get("dataset_id") or None,
+                model_id=payload.get("model_id") or None,
+                motivation=payload.get("motivation") or None,
+                entrypoint=payload.get("entrypoint") or None,
+                varied=varied,
+                random_seed=payload.get("random_seed"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(422, f"实验协议填得不对：{exc}")
+        st.save_experiment(exp)
+        return {"experiment": exp.model_dump(by_alias=True)}
+
+    @app.delete("/api/experiments/{exp_id}")
+    def delete_experiment(exp_id: str) -> Dict[str, Any]:
+        st = store()
+        d = st.layout.experiment_path(exp_id)
+        f = d / "experiment.yaml"
+        if not f.is_file():
+            raise HTTPException(404, f"没有实验 {exp_id}")
+        if st.load_experiment(exp_id).run_ids:
+            # 跑过的实验直接删会把结果原子变成孤儿，审计会指向不存在的来源
+            raise HTTPException(
+                409, f"{exp_id} 已经有运行记录了，不能直接删除。"
+                     f"先确认那些结果不需要，再手工清理。")
+        f.unlink()
+        try:
+            d.rmdir()
+        except OSError:
+            pass
+        return {"removed": exp_id}
+
     @app.get("/api/experiments/{exp_id}")
     def get_experiment(exp_id: str) -> Dict[str, Any]:
         st = store()
