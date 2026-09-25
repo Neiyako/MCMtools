@@ -785,9 +785,40 @@ function sourceLabel(src) {
 // -- 实验 -------------------------------------------------------------------
 async function screenExperiments(root) {
   setHeader(T.experiments.title, T.experiments.sub);
+  await paintExperiments(root);
+}
+
+/** 实验页。
+ *
+ * 空状态以前只有一句"还没有定义实验" —— 没有任何新建入口，后端也
+ * 只有"运行"没有"创建"。新用户因此永远跑不出第一个结果，整条
+ * 结果追踪链在这里断掉。现在能新建了。
+ */
+async function paintExperiments(root) {
   const exps = await api('/api/experiments');
   if (!exps.length) {
-    root.innerHTML = `<div class="empty">${T.experiments.empty}</div>`;
+    root.innerHTML = `
+      <div class="card">
+        <h2>${T.experiments.card}</h2>
+        <div class="empty">
+          <p>${T.experiments.empty}</p>
+          <p class="muted small">${T.experiments.emptyHint}</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>${T.experiments.newTitle}</h2>
+        <div class="muted small">${T.experiments.newHint}</div>
+        <div id="exp-form">${fieldEditor(EXPERIMENT_FIELDS, {})}</div>
+        <div id="exp-varies"></div>
+        <div class="btn-row">
+          <button class="btn btn-mini" id="exp-add-vary">${
+            T.experiments.addVary}</button>
+          <button class="btn btn-primary" id="exp-create">${
+            T.experiments.createBtn}</button>
+        </div>
+        <div id="exp-msg" class="small" hidden></div>
+      </div>`;
+    await wireExperimentForm(root);
     return;
   }
 
@@ -849,6 +880,121 @@ async function screenExperiments(root) {
       <ol class="trials">${trials.map(t =>
         `<li><code>${esc(t.condition)}</code></li>`).join('')}</ol>`);
   });
+}
+
+/** 实验类型。与后端 ExperimentKind 保持一致。 */
+const EXPERIMENT_KINDS = [
+  { value: 'sensitivity_oat', key: 'kOat' },
+  { value: 'sensitivity_grid', key: 'kGrid' },
+  { value: 'model_comparison', key: 'kCompare' },
+  { value: 'robustness_noise', key: 'kNoise' },
+  { value: 'monte_carlo', key: 'kMonte' },
+  { value: 'cross_validation', key: 'kCV' },
+  { value: 'optimization_run', key: 'kOptim' },
+  { value: 'convergence_study', key: 'kConverge' },
+  { value: 'simulation', key: 'kSim' },
+  { value: 'train_test', key: 'kTrainTest' },
+  { value: 'scenario', key: 'kScenario' },
+  { value: 'backtest', key: 'kBacktest' },
+  { value: 'error_analysis', key: 'kError' },
+  { value: 'other', key: 'kOther' },
+];
+
+function experimentFields() {
+  return [
+    { key: 'label', label: T.experiments.fLabel, hint: T.experiments.fLabelHint },
+    { key: 'kind', label: T.experiments.fKind, type: 'select',
+      options: EXPERIMENT_KINDS.map(k => ({ value: k.value, label: T.experiments[k.key] })),
+      hint: T.experiments.fKindHint },
+    { key: 'dataset_id', label: T.experiments.fDataset, hint: T.experiments.fDatasetHint },
+    { key: 'entrypoint', label: T.experiments.fEntry, placeholder: 'experiments/EXP-001/run.py:run',
+      hint: T.experiments.fEntryHint },
+    { key: 'motivation', label: T.experiments.fWhy, type: 'textarea', rows: 2,
+      hint: T.experiments.fWhyHint },
+  ];
+}
+
+/** 变动参数编辑器。
+ *
+ * 这是让"敏感性分析"真的成为敏感性分析的东西：不写变动轴，
+ * 实验就只会跑一次，出图时也没有横轴可画。
+ */
+function varyRowHtml(idx) {
+  return `<div class="vary-row" data-vary="${idx}">
+    <input class="input" data-v-name placeholder="${T.experiments.vNamePh}">
+    <input class="input" data-v-values placeholder="${T.experiments.vValuesPh}">
+    <input class="input" data-v-unit placeholder="${T.experiments.vUnitPh}">
+    <button class="btn btn-mini btn-danger" data-v-del="${idx}">${
+      T.math.remove}</button>
+  </div>`;
+}
+
+async function wireExperimentForm(root) {
+  const box = root.querySelector('#exp-varies');
+  const fieldList = experimentFields();
+  box.innerHTML = `<div class="muted small" style="margin-top:12px">${
+    T.experiments.varyTitle}</div>
+    <div class="muted small">${T.experiments.varyHint}</div>
+    <div id="vary-rows">${varyRowHtml(0)}</div>`;
+  let n = 1;
+
+  const msg = (t, ok) => {
+    const el = root.querySelector('#exp-msg');
+    el.hidden = false;
+    el.className = ok ? 'success-box small' : 'error-box small';
+    el.textContent = t;
+  };
+  const bindDel = () => {
+    box.querySelectorAll('[data-v-del]').forEach(b => {
+      b.onclick = () => {
+        const rows = box.querySelectorAll('.vary-row');
+        if (rows.length <= 1) {
+          rows[0].querySelectorAll('input').forEach(i => { i.value = ''; });
+          return;
+        }
+        b.closest('.vary-row').remove();
+      };
+    });
+  };
+  bindDel();
+
+  root.querySelector('#exp-add-vary').onclick = () => {
+    box.querySelector('#vary-rows').insertAdjacentHTML('beforeend', varyRowHtml(n++));
+    bindDel();
+  };
+
+  root.querySelector('#exp-create').onclick = async () => {
+    root.querySelector('#exp-msg').hidden = true;
+    const v = readFields(fieldList);
+    // 变动参数：填了名字才算，空行直接跳过
+    const varied = [...box.querySelectorAll('.vary-row')].map(r => {
+      const name = r.querySelector('[data-v-name]').value.trim();
+      const rawVals = r.querySelector('[data-v-values]').value.trim();
+      const unit = r.querySelector('[data-v-unit]').value.trim();
+      if (!name) return null;
+      const values = rawVals
+        ? rawVals.split(/[,，\s]+/).filter(Boolean).map(x => {
+            const num = Number(x);
+            return Number.isFinite(num) && x !== '' ? num : x;
+          })
+        : null;
+      return { name, values, unit: unit || null };
+    }).filter(Boolean);
+
+    if (varied.some(x => !x.values || !x.values.length)) {
+      msg(T.experiments.varyNeedValues, false);
+      return;
+    }
+    try {
+      await api('/api/experiments', {
+        method: 'POST', body: JSON.stringify({ ...v, varied }),
+      });
+      msg(T.experiments.created, true);
+      await paintExperiments(root);
+    } catch (e) {
+      msg(`${T.experiments.createFailed}${e.message || e}`, false);
+    }
+  };
 }
 
 // -- 生图工作台 -------------------------------------------------------------

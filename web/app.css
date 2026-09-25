@@ -487,3 +487,10 @@ tr.row-locked td { font-weight: 500; }
   background: #e8f6e8; color: #246124;
   border: 1px solid #b7dfb7;
 }
+
+/* 变动参数行：三个输入并排，窄屏自动换行 */
+.vary-row {
+  display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap;
+}
+.vary-row .input { flex: 1 1 150px; min-width: 0; }
+.vary-row [data-v-del] { flex: 0 0 auto; }
