@@ -135,6 +135,8 @@ templates/
 | 面板怎么改参数、做图 | [docs/panel-editing.md](docs/panel-editing.md) |
 | 架构与设计取舍 | [docs/mcmtools-architecture.md](docs/mcmtools-architecture.md) |
 | **改代码 / 打补丁 / 排查故障** | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
+| 界面用词规范 | [docs/zh-terminology.md](docs/zh-terminology.md) |
+| 各层实现细节（core/compiler/runner/api/panel） | [docs/phase1-core.md](docs/phase1-core.md) 等五份 |
 
 ---
 
