@@ -1,0 +1,51 @@
+template_id: fig.sensitivity_line
+kind: figure
+version: 1.0.0
+purpose: Show a metric's response as one parameter varies.
+observed_in: the single most common generated plot type in the corpus
+evidence:
+- '2022 C/2200401 Fig 11: number of trades and final profit vs transaction cost'
+- '2024 A/2400996 Fig 19/20: ''Influence of different values of k'' / ''of b0'''
+- '2023 A/2322687: growth-rate sweep vs biomass'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y
+  - series
+  - baseline
+inputs:
+- name: x
+  role: independent_variable
+  type: array
+  optional: false
+- name: y
+  role: metric
+  type: array
+  optional: false
+- name: series
+  role: grouping
+  type: array
+  optional: true
+- name: baseline
+  role: reference_value
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Effect of varying {x_label} on {y_label}.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 某个指标随一个参数变化的响应。

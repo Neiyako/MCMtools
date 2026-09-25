@@ -1,0 +1,40 @@
+template_id: fig.flowchart
+kind: figure
+version: 1.0.0
+purpose: Algorithm or methodology flow.
+observed_in: ~4.3% of captions (flow/process/procedure/framework)
+evidence:
+- '2022 C/2200401 Fig 9: ''Procedure of 6-month-per-period APGM'''
+- '2024 A/2400996: Algorithm 1 block rendered as a flow'
+backend: drawio
+figure_type: diagram
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - nodes
+  - edges
+inputs:
+- name: nodes
+  role: structure
+  type: array
+  optional: false
+- name: edges
+  role: structure
+  type: array
+  optional: false
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{title}.'
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 算法或方法流程。输出可编辑的 drawio 文件。

@@ -1,0 +1,54 @@
+template_id: fig.heatmap_annotated
+kind: figure
+version: 1.0.0
+purpose: Confusion matrix or cross-tabulation heat map with the count written in every cell.
+observed_in: the standard classification-result figure; classification problems appear in the corpus but report accuracy only
+evidence:
+- 'corpus: 0/155 Outstanding papers print a confusion matrix, while classification sub-problems appear in 2023 C and 2024 C'
+- '2023 C/2309397: classifier errors discussed in prose as a table of counts'
+- '2021 C/2107052: category confusion described by a single accuracy number'
+backend: matplotlib
+figure_type: heatmap
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - matrix
+  - row_labels
+  - col_labels
+inputs:
+- name: matrix
+  role: matrix
+  type: matrix
+  optional: false
+  description: 混淆矩阵/交叉表，第 i 行第 j 列是真实类 i 被预测成类 j 的样本数
+- name: row_labels
+  role: labels
+  type: array
+  optional: false
+  description: 行标签（真实类别），个数等于 matrix 的行数
+- name: col_labels
+  role: labels
+  type: array
+  optional: false
+  description: 列标签（预测类别），个数等于 matrix 的列数
+- name: normalize
+  role: annotation
+  type: scalar
+  optional: true
+  description: 为真时按行归一化，格子里显示百分比而不是计数
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Confusion matrix over {n_classes} classes.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 带数值标注的混淆矩阵热力图，每格都写清数量。

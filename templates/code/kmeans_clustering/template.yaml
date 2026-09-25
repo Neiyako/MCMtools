@@ -1,0 +1,57 @@
+template_id: code.kmeans_clustering
+kind: code
+version: 1.0.0
+description: K-means clustering with elbow method and silhouette score for choosing K.
+purpose: Group unlabelled samples and justify the number of clusters quantitatively.
+purpose_cn: 聚类分析 K-means：k-means++ 初始化、肘部法选 K、轮廓系数评估与聚类结果可视化。
+observed_in: common for customer segmentation and regional classification
+evidence:
+- '2023 C: 用户分群是常见子问题'
+- 'corpus: 肘部法是选 K 的标准做法'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - features
+inputs:
+- name: features
+  role: dataset
+  type: matrix
+  optional: false
+  description: 样本乘特征的数值矩阵
+- name: k_range
+  role: parameter
+  type: any
+  optional: false
+  description: 候选 K 范围
+- name: standardize
+  role: parameter
+  type: scalar
+  optional: true
+  description: 是否标准化
+outputs:
+- name: labels
+  role: artifact
+  type: array
+  optional: false
+  description: 每个样本的簇标签
+- name: centers
+  role: artifact
+  type: matrix
+  optional: false
+  description: 簇中心
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 选 K 图与聚类散点图
+defaults:
+  k_min: 2
+  k_max: 8
+  n_init: 12
+  standardize: true
+entrypoint: code/kmeans_clustering/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

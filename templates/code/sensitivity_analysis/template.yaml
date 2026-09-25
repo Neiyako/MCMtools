@@ -1,0 +1,52 @@
+template_id: code.sensitivity_analysis
+kind: code
+version: 1.0.0
+description: One-at-a-time and two-way sensitivity sweeps plus variance-based first-order indices.
+purpose: Rank which parameters matter and expose interactions between them.
+purpose_cn: 单因子与双因子敏感性分析：弹性系数、极差比、交互作用指数与 Sobol 一阶方差分解。
+observed_in: near-universal in winning papers as a robustness section
+evidence:
+- 'corpus: 敏感性分析几乎是 R1 论文的必备章节'
+- '2022 B: 参数敏感性用于说明结论稳健'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - model
+  - base_params
+  - sweep_spec
+inputs:
+- name: model
+  role: model
+  type: any
+  optional: false
+  description: 模型：参数字典到标量指标
+- name: base_params
+  role: parameter
+  type: any
+  optional: false
+  description: 基准参数值
+- name: sweep_spec
+  role: parameter
+  type: any
+  optional: false
+  description: 各参数扫描范围
+outputs:
+- name: ranking
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 敏感度排序表
+- name: figures
+  role: file
+  type: file
+  optional: false
+  description: 蜘蛛图 热力图 龙卷风图
+defaults:
+  sweep_points: 25
+  two_way_points: 40
+entrypoint: code/sensitivity_analysis/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

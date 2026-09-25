@@ -1,0 +1,64 @@
+template_id: code.queueing_metrics
+kind: code
+version: 1.0.0
+description: Queueing-theory metrics for M/M/1, M/M/c and M/M/c/K systems with cost optimisation.
+purpose: 'Size a service system: how many servers minimise waiting plus operating cost.'
+purpose_cn: 排队论指标计算：M/M/1、M/M/c、M/M/c/K 的等待时间、队长、利用率与阻塞率，含仿真验证与最优服务台数。
+observed_in: reliable in service, hospital and traffic congestion problems
+evidence:
+- '2024 E: 服务能力配置需要排队论'
+- 'corpus: 排队论是典型的服务系统优化工具'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - arrival_rate
+  - service_rate
+  - n_servers
+inputs:
+- name: arrival_rate
+  role: parameter
+  type: scalar
+  optional: false
+  description: 到达率 lambda
+- name: service_rate
+  role: parameter
+  type: scalar
+  optional: false
+  description: 单台服务率 mu
+- name: n_servers
+  role: parameter
+  type: scalar
+  optional: true
+  description: 服务台数量 c
+- name: capacity
+  role: parameter
+  type: scalar
+  optional: true
+  description: 系统容量 K，空表示无限
+outputs:
+- name: metrics
+  role: artifact
+  type: any
+  optional: false
+  description: 各项排队指标
+- name: optimal_servers
+  role: metadata
+  type: any
+  optional: false
+  description: 成本最优的服务台数
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 指标随 c 变化图
+defaults:
+  arrival_rate: 18.0
+  service_rate: 5.0
+  n_servers: 4
+  c_max: 12
+entrypoint: code/queueing_metrics/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

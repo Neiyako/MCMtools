@@ -1,0 +1,6 @@
+#!/usr/bin/env python3
+"""Thin launcher for the MCMtools CLI (works without installation)."""
+import sys, pathlib
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from mcmcore.cli import main
+raise SystemExit(main())

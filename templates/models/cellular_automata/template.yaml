@@ -1,0 +1,41 @@
+template_id: model.cellular_automata
+kind: model
+version: 1.0.0
+description: Spatially explicit simulation on a grid with local update rules.
+observed_in: used for spreading, traffic and land-use problems with local interaction
+evidence:
+- 'corpus: agent/cellular simulation in 23.9% of Outstanding papers (broad simulation family)'
+- '2020 A/2000015: forest-fire spread on a cellular grid'
+- '2017 B/1700008: traffic cellular automaton with rule 184 variants'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - grid
+  - neighbourhood
+  - update_rule
+  - boundary_condition
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - cell_state
+  - neighbourhood
+  - rule
+  - parameter
+  typical_sections:
+  - Cellular Model
+  - Update Rules
+  - Simulation Results
+  checklist:
+  - 邻域定义写清（von Neumann 还是 Moore）
+  - 边界条件写清（周期/吸收/反射），它显著影响结果
+  - 更新是同步还是异步，说明理由
+  - 网格分辨率对结果的影响（做一次粗化测试）
+  - 随机种子的处理：给出多次运行的均值与方差
+purpose_cn: 元胞自动机：在网格上按局部规则演化，适合扩散、交通、土地利用。

@@ -1,0 +1,46 @@
+template_id: fig.heatmap_matrix
+kind: figure
+version: 1.0.0
+purpose: Two-parameter response surface, or a correlation matrix.
+observed_in: ~1.9% correlation captions + ~5% grid sweeps; visually distinctive and highly valued
+evidence:
+- '2021 A/2100454: heat map of decomposition rate over p and n'
+- '2022 C/2200401 Fig 6: ''Heat map, ACF and PACF figure'''
+- '2024 A/2400996: ''Correlation Matrix'' covering ecosystem components'
+backend: matplotlib
+figure_type: heatmap
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - matrix
+  - labels
+  - colorbar_label
+inputs:
+- name: matrix
+  role: matrix
+  type: matrix
+  optional: false
+- name: labels
+  role: labels
+  type: array
+  optional: true
+- name: colorbar_label
+  role: label
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{title} heat map.'
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 双参数响应曲面，或相关性矩阵。

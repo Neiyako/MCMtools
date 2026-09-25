@@ -1,0 +1,50 @@
+template_id: model.evaluation_topsis
+kind: model
+version: 1.0.0
+description: 'Multi-criteria decision analysis: weights, normalisation, and a ranking.'
+observed_in: evaluation problems (熵权法/TOPSIS/灰色关联) are a recurring Chinese-competition pattern
+evidence:
+- 'corpus: AHP/entropy-weight/ranking content appears in 9.0% of Outstanding papers'
+- '2023 E/2307777: entropy-weighted TOPSIS for regional sustainability ranking'
+- '2021 C/2100123: AHP for supplier selection with consistency check'
+requires:
+  model: false
+  dataset: true
+  required_fields:
+  - alternatives
+  - criteria
+  - weights
+  - normalisation
+  - ranking_rule
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - alternative
+  - criterion
+  - weight
+  - score
+  - parameter
+  typical_sections:
+  - Indicator System
+  - Weight Determination
+  - Comprehensive Evaluation
+  common_methods:
+  - ahp
+  - entropy_weight
+  - topsis
+  - grey_relational
+  - critic
+  - rank_sum
+  checklist:
+  - 每个指标说清是效益型还是成本型（决定归一化方向）
+  - 权重怎么来的：主观（AHP，要过一致性检验）还是客观（熵权）
+  - AHP 必须给出 CR 值并说明 < 0.1
+  - 归一化方法写明（min-max / z-score / 向量归一化），不同方法排名会变
+  - 做权重敏感性分析：权重扰动后排名是否稳定
+purpose_cn: 多准则决策：权重、归一化、与理想解的距离排序。

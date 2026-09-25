@@ -1,0 +1,34 @@
+template_id: exp.train_test
+kind: experiment
+version: 1.0.0
+description: Held-out evaluation with a stated split ratio.
+observed_in: common in C/D predictive papers
+evidence:
+- '2020 C/2002116: ''We put 80% of the data as the training set and all the rest 20% as the testing set
+  of evaluations.'''
+- '2023 C/2300348: ''predictions made by the training set to the testing have the relative error rate
+  of 2.1569%'''
+requires:
+  model: true
+  dataset: true
+  required_inputs:
+  - train_test_split
+  - metrics
+defaults:
+  train_test_split: 80/20
+caption_template: Prediction performance on the held-out test set.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 留出法评估，明确划分比例。

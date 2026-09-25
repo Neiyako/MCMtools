@@ -1,0 +1,36 @@
+template_id: exp.model_comparison
+kind: experiment
+version: 1.0.0
+description: Compare candidate models/algorithms under one shared protocol and metric set.
+observed_in: 14% of 237 modern papers contain an explicit baseline comparison; 29% contain an 'X outperforms
+  Y' claim
+evidence:
+- '2023 C/2310767 Table 3: Lasso/Ridge/XGBoost/LightGBM/Stacking x (MSE, RMSE, MAE, R2), Stacking best
+  at R2=0.8377'
+- '2017 D/55295: ''The greedy algorithm achieves a much smaller queue size of less then 16 compared to
+  the original model'''
+- '2015 D/34985: GA vs Nelder-Mead vs Powell, compared on both quality and wall-clock viability'
+requires:
+  model: true
+  dataset: true
+  required_inputs:
+  - model_ids
+  - metrics
+defaults:
+  aggregation: mean_over_folds
+caption_template: Performance comparison of candidate models.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 在同一套协议下对比多个候选模型或算法。

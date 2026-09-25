@@ -1,0 +1,59 @@
+template_id: fig.dual_axis
+kind: figure
+version: 1.0.0
+purpose: Plot two series with different units on one time axis, each against its own y-axis.
+observed_in: the standard way the corpus shows a driver and its response together
+evidence:
+- '2022 C/2200401 Fig 11: number of trades and final profit plotted against transaction cost'
+- '2023 A/2322687: growth rate and biomass shown over the same season'
+- 'corpus: driver-versus-response pairs recur wherever a policy variable is compared with its outcome'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y_left
+  - y_right
+inputs:
+- name: x
+  role: independent_variable
+  type: array
+  optional: false
+  description: 横轴（通常是时间），两条序列共用
+- name: y_left
+  role: metric
+  type: array
+  optional: false
+  description: 左纵轴的序列，长度等于 x
+- name: y_right
+  role: reference
+  type: array
+  optional: false
+  description: 右纵轴的序列，长度等于 x
+- name: left_label
+  role: label
+  type: scalar
+  optional: true
+  description: 左纵轴名称（含单位），如"交易笔数（笔）"
+- name: right_label
+  role: label
+  type: scalar
+  optional: true
+  description: 右纵轴名称（含单位），如"累计收益（元）"
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{y_label} and the paired series over {x_label}.'
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 双纵轴图，两个量纲不同的序列画在同一时间轴上。

@@ -1,0 +1,35 @@
+template_id: tab.scenario_outcomes
+kind: table
+version: 1.0.0
+purpose: Show what each scenario or policy produces, side by side.
+observed_in: the decision table that closes a policy-oriented paper
+evidence:
+- '2022 B/2202748 Table 5: water allocation under three scenarios'
+- '2021 D/2100002 Table 6: intervention outcomes by scenario'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Scenario
+  - Objective value
+  - Key metric
+  - Feasible
+  caption_template: Outcomes under each scenario.
+purpose_cn: 各情景或政策分别产出什么，并排对比。

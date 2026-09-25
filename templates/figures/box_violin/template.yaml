@@ -1,0 +1,45 @@
+template_id: fig.box_violin
+kind: figure
+version: 1.0.0
+purpose: Compare the full shape of several group distributions, not just their medians.
+observed_in: a recurring figure in Outstanding papers that compare treatments or scenarios
+evidence:
+- 'corpus: distribution-comparison figures appear in roughly a third of Outstanding papers'
+- '2023 C/2300348 Fig 3: violin plot comparing the score distribution across the three test variants'
+- '2021 D/2100803 Fig 5: grouped box plots of the parameter estimates under each scenario'
+backend: matplotlib
+figure_type: box
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - groups
+  - values
+inputs:
+- name: groups
+  role: grouping
+  type: array
+  optional: false
+- name: values
+  role: distribution
+  type: array
+  optional: false
+- name: group_order
+  role: labels
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Distribution of {y_label} across {x_label} groups.
+defaults:
+  format: pdf
+  width_in: 6.4
+latex: \includegraphics[width=0.9\linewidth]{{{file}}}
+purpose_cn: 对比多组分布的整体形状，不只是中位数。

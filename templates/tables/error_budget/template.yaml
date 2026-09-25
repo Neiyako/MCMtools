@@ -1,0 +1,35 @@
+template_id: tab.error_budget
+kind: table
+version: 1.0.0
+purpose: Break total uncertainty into the contribution of each source.
+observed_in: the honest table that separates what is measured from what is assumed
+evidence:
+- 'corpus: error-budget tables appear where parameters are uncertain'
+- '2021 C/2100123 Table 5: uncertainty contribution by parameter'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Source
+  - Magnitude
+  - Contribution to variance
+  - Reducible
+  caption_template: Error budget for {metric_label}.
+purpose_cn: 把总不确定性拆成各来源的贡献。

@@ -1,0 +1,34 @@
+template_id: tab.assumption_register
+kind: table
+version: 1.0.0
+purpose: List every assumption with its justification and where it is tested.
+observed_in: strong papers tie each assumption to a sensitivity test
+evidence:
+- 'corpus: 105/237 modern papers state parameter provenance explicitly'
+- '2023 C/2307166 Table 1: assumption / justification / tested-in'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Assumption
+  - Justification
+  - Tested in
+  caption_template: Model assumptions and how each is tested.
+purpose_cn: 逐条列出假设、理由，以及在哪一节被检验。

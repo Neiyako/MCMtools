@@ -1,0 +1,49 @@
+template_id: fig.radar_compare
+kind: figure
+version: 1.0.0
+purpose: Compare several candidates across many normalised indicators at once.
+observed_in: the default figure of evaluation sub-problems in the corpus
+evidence:
+- '2021 C/2107052: supplier scoring across cost, quality and delivery indicators'
+- '2023 B/2305312: multi-criteria site ranking on a closed indicator set'
+- 'corpus: evaluation problems routinely need 4-8 indicators shown for 3-6 candidates'
+backend: matplotlib
+figure_type: radar
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - categories
+  - series
+  - labels
+inputs:
+- name: categories
+  role: labels
+  type: array
+  optional: false
+  description: 各评价指标的名称
+- name: series
+  role: metric
+  type: matrix
+  optional: false
+  description: 每个方案一行，行内是各指标的得分（长度等于 categories）
+- name: labels
+  role: labels
+  type: array
+  optional: false
+  description: 各方案名称，个数等于 series 的行数
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Radar comparison of {n_series} candidates over {n_categories} indicators.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 多个方案在多个归一化指标上的综合对比。

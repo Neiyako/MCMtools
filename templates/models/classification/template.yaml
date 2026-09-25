@@ -1,0 +1,31 @@
+template_id: model.classification
+kind: model
+version: 1.0.0
+description: Clustering / classification (K-means, random forest, SVM).
+observed_in: common in C/D
+evidence:
+- '2023 C/2300348: ''Difficulty Rate Classification Model by K-Means++'''
+- '2023 C/2307946: ''LightGBM Classifier based on K-means Clustering Model'''
+- '2023 C/2309397: ''GMM Clustering Model'''
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - features
+  - n_clusters_or_labels
+  - metrics
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: classification
+  symbol_roles:
+  - parameter
+  - output_metric
+  typical_sections:
+  - Model Construction
+  - Classification Results
+purpose_cn: 聚类与分类：K-means、随机森林、SVM 等。

@@ -1,0 +1,82 @@
+id: EXP-001
+label: Parameter sensitivity of PCQL
+kind: sensitivity_oat
+model_id: null
+dataset_id: null
+task_refs: []
+section_ref: '6'
+parent_experiment_ids: []
+variant_of: null
+removed_components: []
+supersedes: null
+motivation: beta is the least constrained parameter; the paper notes some parameters rest on limited evidence.
+uncertainty_rationale: null
+varied:
+- name: beta
+  values:
+  - 0.1
+  - 0.177
+  - 0.25
+  range: null
+  step: null
+  unit: null
+  note: null
+held_fixed:
+- gamma
+- lambda
+- phi
+varied_axis: none
+method: ode_solve
+baseline_ref:
+  kind: none
+  ref: null
+  description: null
+n_runs: 1
+n_folds: null
+aggregation: none
+perturbation: null
+readout_condition: null
+max_iterations: null
+convergence_criterion: null
+converged_at: null
+hyperparameters: {}
+train_test_split: null
+entrypoint: code/pcql.py:run
+software: Python
+random_seed: null
+runtime_seconds: null
+status: completed
+failure_reason: null
+metrics:
+- name: peak_C
+  value: null
+  unit: null
+  direction: neutral
+  dispersion: null
+  dispersion_kind: none
+  per_variant: {}
+  definition: null
+result_atom_ids:
+- RES-EXP001-PEAK-ACTIVE-001
+- RES-EXP001-PEAK-DAY-001
+- RES-EXP001-FINAL-ACTIVE-001
+- RES-EXP001-FINAL-LOYAL-001
+- RES-EXP001-FINAL-QUITTED-001
+- RES-EXP001-PEAK-ACTIVE-002
+- RES-EXP001-PEAK-DAY-002
+- RES-EXP001-FINAL-ACTIVE-002
+- RES-EXP001-FINAL-LOYAL-002
+- RES-EXP001-FINAL-QUITTED-002
+- RES-EXP001-PEAK-ACTIVE-003
+- RES-EXP001-PEAK-DAY-003
+- RES-EXP001-FINAL-ACTIVE-003
+- RES-EXP001-FINAL-LOYAL-003
+- RES-EXP001-FINAL-QUITTED-003
+run_ids:
+- RUN-001-058
+- RUN-001-059
+- RUN-001-060
+figure_ids: []
+table_ids: []
+claim_ids: []
+caveats: []

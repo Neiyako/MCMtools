@@ -1,0 +1,63 @@
+template_id: code.parameter_fitting
+kind: code
+version: 1.0.0
+description: Fit model parameters by coarse grid search then nonlinear least squares, with bootstrap CIs.
+purpose: Estimate unknown parameters and report uncertainty, avoiding local minima.
+purpose_cn: 参数拟合：粗网格全局定位、局部精化、非线性最小二乘，附参数标准误与 Bootstrap 置信区间。
+observed_in: essential whenever a model has parameters to calibrate from data
+evidence:
+- '2024 A: 参数标定是模型可用的前提'
+- 'corpus: 参数表加拟合优度是建模章节标准内容'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - model
+  - x
+  - y
+inputs:
+- name: model
+  role: model
+  type: any
+  optional: false
+  description: 模型函数 f(x; params)
+- name: x
+  role: dataset
+  type: array
+  optional: false
+  description: 自变量
+- name: y
+  role: dataset
+  type: array
+  optional: false
+  description: 观测值
+- name: param_spec
+  role: parameter
+  type: any
+  optional: false
+  description: 各参数搜索范围
+outputs:
+- name: params
+  role: artifact
+  type: any
+  optional: false
+  description: 最优参数
+- name: diagnostics
+  role: metadata
+  type: any
+  optional: false
+  description: R2 标准误与置信区间
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 拟合曲线与残差图
+defaults:
+  grid_points: 12
+  refine_rounds: 4
+  bootstrap_n: 100
+entrypoint: code/parameter_fitting/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

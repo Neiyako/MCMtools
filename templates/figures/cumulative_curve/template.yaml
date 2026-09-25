@@ -1,0 +1,49 @@
+template_id: fig.cumulative_curve
+kind: figure
+version: 1.0.0
+purpose: Show how a quantity accumulates, and how far it deviates from an ideal baseline.
+observed_in: the standard figure for accumulation, learning curves and Lorenz curves
+evidence:
+- '2022 C/2200401 Fig 7: cumulative profit across the trading window'
+- '2024 B/2400996: cumulative production vs cumulative installed capacity'
+- 'corpus: Lorenz-style concentration curves appear in the equity/inequality sub-problems'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y
+inputs:
+- name: x
+  role: independent_variable
+  type: array
+  optional: false
+- name: y
+  role: metric
+  type: array
+  optional: false
+- name: reference_x
+  role: reference_series
+  type: array
+  optional: true
+- name: reference_y
+  role: reference_series
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Cumulative {y_label} against {x_label}, with the uniform reference.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 一个量如何累积，以及它离理想情况有多远。

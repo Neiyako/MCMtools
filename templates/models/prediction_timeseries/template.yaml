@@ -1,0 +1,34 @@
+template_id: model.prediction_timeseries
+kind: model
+version: 1.0.0
+description: Time-series forecasting (ARIMA, Prophet, GRU/LSTM).
+observed_in: dominant in C; RMSE/MAE/MAPE/MSE appear almost exclusively in C
+evidence:
+- '2023 C/2309397: ''ARIMA-BP Interval Prediction Model Based On Bootstrap'''
+- '2023 C/2300348: GRU, ''relative error rate of 2.1569%'', prediction interval 20367 +/- 2.01569%'
+- '2022 C/2200401: ARIMA with p,q chosen by ACF/PACF and MSE heat map'
+- '2023 C/2310767: 5-model comparison, Stacking best at R2=0.8377'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - target_series
+  - order_or_architecture
+  - train_test_split
+  - metrics
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: prediction
+  symbol_roles:
+  - parameter
+  - state
+  - output_metric
+  typical_sections:
+  - Algorithm Description
+  - Prediction and Evaluation
+purpose_cn: 时间序列预测：ARIMA、Prophet、GRU/LSTM。

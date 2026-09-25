@@ -1,0 +1,41 @@
+template_id: model.differential_discrete
+kind: model
+version: 1.0.0
+description: Discrete-time recurrence or difference-equation model.
+observed_in: common when data is collected in fixed intervals (daily/weekly counts)
+evidence:
+- 'corpus: discrete/recurrence/Markov content in 5-8% of Outstanding papers'
+- '2023 C: daily Wordle counts naturally modelled in discrete time'
+- '2022 B/2202748: weekly water allocation as a discrete recurrence'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - state_variables
+  - update_rule
+  - time_step
+  - initial_condition
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - state
+  - parameter
+  - time_index
+  - derived
+  typical_sections:
+  - Discrete Model
+  - Stability Analysis
+  - Steady State
+  checklist:
+  - 时间步长说清（天/周/月），以及为什么选它
+  - 递推式的下标范围写清楚，避免 off-by-one
+  - 稳定性条件给出（特征值模长或 Jury 判据）
+  - 平衡点及其稳定性分析
+  - 与连续模型的对照（离散化误差有多大）
+purpose_cn: 离散时间的递推或差分方程模型。

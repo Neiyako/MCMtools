@@ -1,0 +1,48 @@
+template_id: fig.histogram_distribution
+kind: figure
+version: 1.0.0
+purpose: Show the empirical distribution of one quantity, with its location and spread marked.
+observed_in: 35.5% of Outstanding papers contain a distribution figure
+evidence:
+- 'corpus: 55/155 Outstanding papers contain a distribution or density figure'
+- '2023 C/2300348 Fig 2: histogram of the reported scores with median and mean marked'
+- '2022 C/2200401 Fig 4: distribution of daily returns fitted with a normal density'
+backend: matplotlib
+figure_type: bar
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - values
+inputs:
+- name: values
+  role: distribution
+  type: array
+  optional: false
+- name: bins
+  role: parameter
+  type: scalar
+  optional: true
+- name: fit_curve
+  role: reference_series
+  type: array
+  optional: true
+- name: kde_x
+  role: independent_variable
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Distribution of {y_label} across {n} observations.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 一个量的经验分布，标出均值和分位数。

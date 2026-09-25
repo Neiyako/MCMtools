@@ -1,0 +1,40 @@
+template_id: exp.sensitivity_oat
+kind: experiment
+version: 1.0.0
+description: One-at-a-time parameter sweep with a declared invariant. The dominant MCM sensitivity design.
+observed_in: ~42% of 346 tagged papers have a numbered 'Sensitivity Analysis' section; the overwhelming
+  majority are OAT
+evidence:
+- '2023 C/2301192: ''In each parameter analysis, we only varied that parameter while keeping the other
+  parameters at their default values.'''
+- '2021 A/2100454: ''we take the range p in [0.05, 0.3], n in [50, 175] ... fix other parameters and initial
+  values'''
+- '2022 B/2202748: a 3-point beta sweep reported as a table (55567, 53722, 52642)'
+- '2023 A/2322687: baseline c_i=1 with two counterfactuals c_i=0.8 and c_i=1.2'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - varied
+  - held_fixed
+  - model_id
+defaults:
+  n_runs: 1
+  aggregation: none
+  readout_condition: final timestep
+caption_template: Effect of varying {param_label} on {metric_label}.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 单因子扫描，并声明哪些量保持不变。

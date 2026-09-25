@@ -1,0 +1,65 @@
+template_id: fig.confidence_band
+kind: figure
+version: 1.0.0
+purpose: Mean trajectory with a shaded confidence or uncertainty band above and below it.
+observed_in: one of the most common figures in forecasts and simulation output; the corpus mostly draws bare curves
+evidence:
+- 'corpus: simulation papers report a single mean path and mention the spread only in prose'
+- '2022 C/2200401: trading-window forecast shown as one line, no interval'
+- '2024 A/2400996: parameter-estimate uncertainty reported as a table of standard errors'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - mean
+  - lower
+  - upper
+inputs:
+- name: x
+  role: independent_variable
+  type: array
+  optional: false
+  description: 横轴（时间或参数），各序列共用
+- name: mean
+  role: metric
+  type: array
+  optional: false
+  description: 均值/中心轨迹，长度等于 x
+- name: lower
+  role: uncertainty
+  type: array
+  optional: false
+  description: 置信下界，长度等于 x，必须不大于 upper
+- name: upper
+  role: uncertainty
+  type: array
+  optional: false
+  description: 置信上界，长度等于 x，必须不小于 lower
+- name: observed
+  role: reference_series
+  type: array
+  optional: true
+  description: 实测序列，会叠成散点做对照，长度等于 x
+- name: confidence
+  role: reference_value
+  type: scalar
+  optional: true
+  description: 置信水平，如 0.95，只用于图例文字
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{y_label} with {confidence} confidence band over {x_label}.'
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 均值线加置信区间填充带，预测与仿真的标准画法。

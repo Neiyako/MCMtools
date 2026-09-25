@@ -1,0 +1,59 @@
+template_id: fig.errorbar_series
+kind: figure
+version: 1.0.0
+purpose: Show the mean trajectory of a repeated experiment together with its uncertainty band.
+observed_in: the standard way Monte-Carlo and cross-validation results are presented; corpus papers usually
+  report only the mean line
+evidence:
+- 'corpus: uncertainty is reported in tables (std columns) far more often than it is drawn'
+- '2023 C/2308281 Fig 4: mean and spread of the simulated series over repeated trials'
+- '2024 C/2400521: Monte-Carlo replication results quoted as mean plus-or-minus std in prose only'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - mean
+  - std
+inputs:
+- name: x
+  role: independent_variable
+  type: array
+  optional: false
+- name: mean
+  role: metric
+  type: array
+  optional: false
+- name: std
+  role: uncertainty
+  type: array
+  optional: false
+- name: lower
+  role: uncertainty
+  type: array
+  optional: true
+- name: upper
+  role: uncertainty
+  type: array
+  optional: true
+- name: series
+  role: grouping
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Mean {y_label} with uncertainty band across {x_label}.
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 重复实验的均值轨迹加上离散度，蒙特卡洛和交叉验证的结果图。

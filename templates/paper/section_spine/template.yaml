@@ -1,0 +1,87 @@
+template_id: paper.section_spine
+kind: paper
+version: 1.0.0
+description: The fixed section ORDER, with free membership. Derived from pairwise precedence, not from
+  presence counts.
+observed_in: 83 distinct full orderings across 152 papers, BUT 14 pairwise precedence relations hold at
+  100%
+evidence:
+- 'Pairwise relations at 100%: INTRO->NOTA, INTRO->SENS, INTRO->SW, INTRO->REF, ASSUME->NOTA, NOTA->SENS,
+  INTRO->MODEL, ASSUME->CONC, SENS->SW, ASSUME->SENS, CONC->REF, ASSUME->REF, ASSUME->MODEL, ASSUME->SW'
+- Introduction is first in 108/152 papers (71.1%); Conclusion always precedes References (15/15)
+- The ONE unstable relation is Conclusion vs Strengths&Weaknesses (60%/40%)
+- Literature Review appears in 0 of 415 papers -- NEVER template it
+- 'Presence tiers: MANDATORY >80% References 92.0%, Introduction 87.5%; COMMON 40-80% Abstract 64.6, Assumptions
+  57.1, Conclusion 53.0, Model 48.9, Sensitivity 47.0, Notations 45.1; OPTIONAL <40% everything else'
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  spine:
+  - order: 10
+    kind: introduction
+    title: Introduction
+    enabled: true
+    tier: mandatory
+  - order: 20
+    kind: restatement
+    title: Restatement of the Problem
+    enabled: true
+    tier: optional
+  - order: 30
+    kind: assumptions
+    title: Assumptions and Justifications
+    enabled: true
+    tier: common
+  - order: 40
+    kind: notations
+    title: Notations
+    enabled: true
+    tier: common
+    generated: true
+  - order: 50
+    kind: model
+    title: Model I
+    enabled: true
+    tier: common
+  - order: 60
+    kind: sensitivity
+    title: Sensitivity Analysis
+    enabled: true
+    tier: common
+  - order: 70
+    kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    enabled: true
+    tier: optional
+  - order: 80
+    kind: conclusion
+    title: Conclusion
+    enabled: true
+    tier: common
+  - order: 90
+    kind: references
+    title: References
+    enabled: true
+    tier: mandatory
+    generated: true
+  - order: 100
+    kind: appendix
+    title: Appendix
+    enabled: false
+    tier: optional
+  - order: 110
+    kind: report_on_ai
+    title: Report on Use of AI
+    enabled: false
+    tier: compliance
+    generated: true
+  never_template:
+  - literature_review
+  auto_generated_kinds:
+  - notations
+  - references
+  - report_on_ai
+purpose_cn: 固定的章节先后顺序。语料里 100% 成立的先后关系，不含文献综述。

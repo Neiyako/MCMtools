@@ -1,0 +1,156 @@
+paper_id: PAPER-001
+problem_id: PROB-2023-C
+locked: true
+summary:
+  problem_letter: C
+  team_control_number: '2307166'
+  body: null
+  key_words:
+  - Wordle
+  - SIR
+  - ODE
+  - Bootstrap
+  - Parameter Estimation
+sections:
+- id: SEC-010
+  kind: introduction
+  title: Introduction
+  level: 1
+  order: 10
+  template_ref: null
+  enabled: true
+  body: Wordle spread rapidly through social media.
+  generated: false
+- id: SEC-020
+  kind: restatement
+  title: Restatement of the Problem
+  level: 1
+  order: 20
+  template_ref: null
+  enabled: true
+  body: Forecast the number of reported results.
+  generated: false
+- id: SEC-030
+  kind: assumptions
+  title: Assumptions and Justifications
+  level: 1
+  order: 30
+  template_ref: null
+  enabled: true
+  body: Assumption 1 ...
+  generated: false
+- id: SEC-040
+  kind: notations
+  title: Notations
+  level: 1
+  order: 40
+  template_ref: null
+  enabled: true
+  body: '% 符号表按模型定义自动生成，不要手写 —— 手写必然与正文脱节。
+
+    \input{generated/notations}'
+  generated: true
+- id: SEC-050
+  kind: model
+  title: 'Model I: PCQL Model'
+  level: 1
+  order: 50
+  template_ref: M01
+  enabled: true
+  body: We fit $\beta=\numRESOneZeroZeroOne$ ...
+  generated: false
+- id: SEC-060
+  kind: model
+  title: 'Model II: Report Forecasting'
+  level: 1
+  order: 60
+  template_ref: M02
+  enabled: true
+  body: Model II consumes the compartments of Model I.
+  generated: false
+- id: SEC-070
+  kind: sensitivity
+  title: Sensitivity Analysis
+  level: 1
+  order: 70
+  template_ref: null
+  enabled: true
+  body: We vary beta while holding others fixed.
+  generated: false
+- id: SEC-080
+  kind: strengths_weaknesses
+  title: Strengths and Weaknesses
+  level: 1
+  order: 80
+  template_ref: null
+  enabled: true
+  body: The model is interpretable.
+  generated: false
+- id: SEC-090
+  kind: conclusion
+  title: Conclusion
+  level: 1
+  order: 90
+  template_ref: null
+  enabled: true
+  body: PCQL forecasts well.
+  generated: false
+- id: SEC-100
+  kind: references
+  title: References
+  level: 1
+  order: 100
+  template_ref: null
+  enabled: true
+  body: '% 由 references.bib 自动生成，不要手写条目。
+
+    \bibliographystyle{plain}
+
+    \bibliography{generated/references}'
+  generated: true
+- id: SEC-100
+  kind: appendix
+  title: Appendix
+  level: 1
+  order: 100
+  template_ref: null
+  enabled: false
+  body: ''
+  generated: false
+- id: SEC-110
+  kind: report_on_ai
+  title: Report on Use of AI
+  level: 1
+  order: 110
+  template_ref: null
+  enabled: true
+  body: null
+  generated: true
+latex:
+  documentclass: '[12pt]{article}'
+  packages:
+  - geometry
+  - newtxtext
+  - amsmath
+  - amssymb
+  - amsthm
+  - newtxmath
+  - graphicx
+  - fancyhdr
+  engine: pdflatex
+  bib: null
+  toc: true
+  page_limit: 25
+build:
+  last_built: null
+  pdf_path: build/main.pdf
+  page_count: 5
+ai_usage:
+  ai_used: true
+  entries:
+  - tool: DeepSeek
+    version: v4.1
+    purpose: development
+    phase: pre_competition
+    queries: []
+    in_report: false

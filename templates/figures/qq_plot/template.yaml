@@ -1,0 +1,41 @@
+template_id: fig.qq_plot
+kind: figure
+version: 1.0.0
+purpose: Check whether a sample follows a normal distribution, which is the assumption behind most regression
+  tests.
+observed_in: the standard normality check in regression-style Outstanding papers
+evidence:
+- 'corpus: residual diagnostics appear in most regression-based Outstanding papers'
+- '2022 C/2200401 Fig 6: normal Q-Q plot of the regression residuals used to justify the t-tests'
+- '2023 C/2300348 Fig 4: Q-Q plot of the score residuals before the ANOVA'
+backend: matplotlib
+figure_type: scatter
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - values
+inputs:
+- name: values
+  role: residual
+  type: array
+  optional: false
+- name: confidence
+  role: parameter
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Normal Q-Q plot of {y_label} (n = {n}).
+defaults:
+  format: pdf
+  width_in: 5.2
+latex: \includegraphics[width=0.7\linewidth]{{{file}}}
+purpose_cn: 检验样本是否服从正态分布 —— 很多统计方法的前提。

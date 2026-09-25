@@ -1,0 +1,63 @@
+template_id: code.cellular_automaton
+kind: code
+version: 1.0.0
+description: Two-dimensional cellular automaton grid simulation with neighbour rules.
+purpose: Simulate spatial spread phenomena where each cell updates from its neighbours.
+purpose_cn: 元胞自动机与网格仿真：Moore 邻域规则、环形边界、状态演化快照与覆盖率统计曲线。
+observed_in: common for spatial diffusion such as fire, disease, traffic and urban growth
+evidence:
+- '2023 B: 网格仿真用于空间扩散过程'
+- 'corpus: 元胞自动机是典型的机理仿真手段'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - rule
+  - initial_grid
+inputs:
+- name: rule
+  role: model
+  type: any
+  optional: false
+  description: 演化规则 next_state(grid, age)
+- name: initial_grid
+  role: parameter
+  type: matrix
+  optional: false
+  description: 初始状态网格
+- name: grid_size
+  role: parameter
+  type: scalar
+  optional: true
+  description: 网格边长
+- name: n_steps
+  role: parameter
+  type: scalar
+  optional: true
+  description: 演化步数
+outputs:
+- name: snapshots
+  role: artifact
+  type: matrix
+  optional: false
+  description: 各步网格快照
+- name: stats
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 各状态占比序列
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 快照图与统计曲线
+defaults:
+  grid_size: 100
+  n_steps: 60
+  p_grow: 0.02
+  p_ignite: 0.0006
+entrypoint: code/cellular_automaton/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

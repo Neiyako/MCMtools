@@ -1,0 +1,45 @@
+template_id: fig.pred_vs_actual
+kind: figure
+version: 1.0.0
+purpose: Prediction fit with a y=x reference line.
+observed_in: ~3% of figure captions explicitly reference prediction/fit
+evidence:
+- '2023 C/2300348: training vs testing prediction comparison'
+- '2021 C/2109298: ''CA-predicted population'' with a 95% confidence band'
+backend: matplotlib
+figure_type: scatter
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - actual
+  - predicted
+  - identity_line
+inputs:
+- name: actual
+  role: reference
+  type: array
+  optional: false
+- name: predicted
+  role: metric
+  type: array
+  optional: false
+- name: identity_line
+  role: reference
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Predicted versus actual {quantity_label}.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 预测值对真实值，带 y=x 参考线。

@@ -1,0 +1,53 @@
+template_id: code.data_cleaning
+kind: code
+version: 1.0.0
+description: 'Clean a raw table: drop duplicates, impute missing values, detect and treat outliers.'
+purpose: Turn a dirty table into a modelling-ready matrix with an auditable cleaning log.
+purpose_cn: 数据清洗与缺失值处理：去重、按列策略填补缺失、z 分数法识别并处理异常值，产出可直接建模的干净数据。
+observed_in: every data-driven C/D/E problem starts here; most R1 papers include a cleaning section
+evidence:
+- '2024 C/2400996: 原始表含缺失与单位错误，先清洗再建模'
+- '2023 C/2307166: 缺失率表格是数据预处理章节的标配'
+- 'corpus: 数据类题目几乎都有缺失值处理小节'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - raw_frame
+inputs:
+- name: raw_frame
+  role: dataset
+  type: dataframe
+  optional: false
+  description: 含缺失/重复/异常值的原始表
+- name: missing_strategy
+  role: parameter
+  type: any
+  optional: true
+  description: 每列的填补策略 drop/mean/median/ffill
+- name: outlier_z
+  role: parameter
+  type: scalar
+  optional: true
+  description: 异常值判定的 z 阈值，默认 3.0
+outputs:
+- name: cleaned_frame
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 清洗后的数据表
+- name: cleaning_log
+  role: metadata
+  type: any
+  optional: true
+  description: 清洗过程记录
+defaults:
+  missing_strategy: median
+  outlier_z: 3.0
+  winsorize: true
+entrypoint: code/data_cleaning/snippet.py
+dependencies:
+- numpy
+- pandas
+- matplotlib
+backend: python

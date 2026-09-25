@@ -1,0 +1,53 @@
+template_id: fig.lollipop
+kind: figure
+version: 1.0.0
+purpose: Ranked comparison of many items as stems with a dot, cleaner than a bar chart.
+observed_in: a visual upgrade of the ranked bar chart that dominates contribution and sensitivity sections of the corpus
+evidence:
+- '2024 A/2400996 Fig 14: factor contributions ranked, drawn as a horizontal bar chart with 20+ bars'
+- '2023 A/2322687: parameter sensitivity ranked, bars too narrow to label'
+- 'corpus: ranked-contribution figures are common but become unreadable past ~15 items'
+backend: matplotlib
+figure_type: bar
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - categories
+  - values
+inputs:
+- name: categories
+  role: labels
+  type: array
+  optional: false
+  description: 各条目名称
+- name: values
+  role: metric
+  type: array
+  optional: false
+  description: 各条目的数值，长度等于 categories
+- name: highlight
+  role: grouping
+  type: array
+  optional: true
+  description: 与 categories 等长的真/假标记，为真的条目高亮显示
+- name: highlight_label
+  role: label
+  type: scalar
+  optional: true
+  description: 高亮条目的图例名
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Ranked {x_label} across items.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 排序后的火柴棒图，条目多时比柱状图清爽得多。

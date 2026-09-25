@@ -1,0 +1,45 @@
+template_id: fig.network_graph
+kind: figure
+version: 1.0.0
+purpose: Node-link structure for networks and interactions.
+observed_in: ~3.3% of captions
+evidence:
+- '2022 D/2224178: ''Port Logistics D&A System Meta-Network Model'''
+- '2019 B/1908286: drone network topology'
+backend: matplotlib
+figure_type: graph
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - nodes
+  - edges
+  - node_size
+inputs:
+- name: nodes
+  role: structure
+  type: array
+  optional: false
+- name: edges
+  role: structure
+  type: array
+  optional: false
+- name: node_size
+  role: metric
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{title} network structure.'
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 网络的节点-连边结构。

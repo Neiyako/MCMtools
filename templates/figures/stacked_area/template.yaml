@@ -1,0 +1,46 @@
+template_id: fig.stacked_area
+kind: figure
+version: 1.0.0
+purpose: Show how the composition of a total changes over time or along an axis.
+observed_in: the standard way papers present a breakdown whose parts sum to a total
+evidence:
+- '2023 A/2322687 Fig 5: biomass composition of functional groups over the growth season'
+- '2022 D/2224178: port throughput split by cargo mode across years'
+- 'corpus: 12/155 Outstanding papers show a composition-over-time area figure'
+backend: matplotlib
+figure_type: area
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - t
+  - values
+  - labels
+inputs:
+- name: t
+  role: independent_variable
+  type: array
+  optional: false
+- name: values
+  role: metric
+  type: array
+  optional: false
+- name: labels
+  role: labels
+  type: array
+  optional: false
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Composition of {y_label} over {x_label}, split into {n_series} components.
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 总量构成随时间或沿某个轴的变化。

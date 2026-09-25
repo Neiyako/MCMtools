@@ -1,0 +1,49 @@
+template_id: fig.roc_curve
+kind: figure
+version: 1.0.0
+purpose: Compare the discrimination of one or more classifiers across all thresholds.
+observed_in: the standard classifier-evaluation figure in classification problems
+evidence:
+- 'corpus: ROC figures appear in the classification-based Outstanding papers'
+- '2023 C/2300348 Fig 7: ROC curves of the three candidate classifiers with their AUC in the legend'
+- '2022 C/2200401 Fig 8: ROC curve of the tuned model against the random baseline'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - fpr
+  - tpr
+inputs:
+- name: fpr
+  role: independent_variable
+  type: array
+  optional: false
+- name: tpr
+  role: metric
+  type: array
+  optional: false
+- name: series
+  role: grouping
+  type: array
+  optional: true
+- name: auc
+  role: metric
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: ROC curves of {y_label} on the test set.
+defaults:
+  format: pdf
+  width_in: 5.6
+latex: \includegraphics[width=0.75\linewidth]{{{file}}}
+purpose_cn: 一个或多个分类器在各个阈值下的判别能力，图例显示 AUC。

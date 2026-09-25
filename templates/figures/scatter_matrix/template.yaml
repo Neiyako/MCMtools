@@ -1,0 +1,40 @@
+template_id: fig.scatter_matrix
+kind: figure
+version: 1.0.0
+purpose: Pairwise feature relationships / correlation overview.
+observed_in: common in C/D feature-analysis sections
+evidence:
+- '2020 D/2003723: feature screening with VIF and correlation'
+- '2024 A/2400996: ecosystem correlation matrix'
+backend: matplotlib
+figure_type: scatter
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - frame
+  - variables
+inputs:
+- name: frame
+  role: dataframe
+  type: dataframe
+  optional: false
+- name: variables
+  role: labels
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Pairwise relationships among {n_variables} variables.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 多变量两两之间的关系总览。

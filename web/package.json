@@ -1,0 +1,17 @@
+{
+  "name": "mcmtools-panel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser panel for MCMtools. No build step: app.js and app.css are served directly by the Python API.",
+  "scripts": {
+    "test": "node tests/run.mjs",
+    "test:logic": "node tests/logic.test.mjs",
+    "test:badges": "node tests/badges.test.mjs",
+    "test:render": "node tests/render.test.mjs",
+    "test:flows": "node tests/flows.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^24.0.0"
+  }
+}

@@ -1,0 +1,37 @@
+template_id: tab.parameter_settings
+kind: table
+version: 1.0.0
+purpose: List model parameters with value, unit and PROVENANCE.
+observed_in: 105 of 237 modern papers have a parameter-captioned table
+evidence:
+- '2023 B/2318300: 26 parameters + 6 initial conditions, sourced from literature/data/calculation'
+- '2016 A/44398 Table 11: ''Parameters | Range | Value | Unit''; it prints REJECTED candidates (k=0.3,0.21,0.5*,0.543)'
+- '2016 A/32150 Table 1: a per-region parameter set across 3 countries'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Symbol
+  - Meaning
+  - Value
+  - Unit
+  - Source
+caption_template: Parameter settings for {model_label}.
+purpose_cn: 列出每个参数的值、单位和来源。

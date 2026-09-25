@@ -1,0 +1,59 @@
+template_id: fig.grid_search_surface
+kind: figure
+version: 1.0.0
+purpose: Grid-search result — a heat map over two parameters beside a 1-D slice through one of them.
+observed_in: the way tuning studies report a search; the corpus reports the best point and hides the surface
+evidence:
+- '2024 A/2400996 Fig 19/20: ''Influence of different values of k'' / ''of b0'', each parameter swept alone'
+- '2023 B/2301794: hyper-parameters tuned and only the winning combination reported'
+- 'corpus: 11.6% of Outstanding papers show a 3-D surface of a swept objective, but none show the search grid itself'
+backend: matplotlib
+figure_type: heatmap
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - param_x
+  - param_y
+  - scores
+inputs:
+- name: param_x
+  role: parameter_1
+  type: array
+  optional: false
+  description: 第一个参数的取值列表，长度等于 scores 的列数
+- name: param_y
+  role: parameter_2
+  type: array
+  optional: false
+  description: 第二个参数的取值列表，长度等于 scores 的行数
+- name: scores
+  role: matrix
+  type: matrix
+  optional: false
+  description: 网格得分矩阵，第 r 行第 c 列对应 param_y[r] 与 param_x[c]
+- name: slice_index
+  role: parameter
+  type: scalar
+  optional: true
+  description: 右图取第几行做切片，缺省取得分最高的那一行
+- name: metric_label
+  role: label
+  type: scalar
+  optional: true
+  description: 得分指标名，如 RMSE 或 F1
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Grid search of {metric_label} over {x_label} and {y_label}.
+defaults:
+  format: pdf
+  width_in: 9.2
+latex: \includegraphics[width=\linewidth]{{{file}}}
+purpose_cn: 网格搜索结果：左边看二维响应面，右边看单参数切片曲线。

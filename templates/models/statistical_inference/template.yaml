@@ -1,0 +1,41 @@
+template_id: model.statistical_inference
+kind: model
+version: 1.0.0
+description: Hypothesis testing, confidence intervals, and uncertainty quantification.
+observed_in: appears as the validation backbone of empirical problems
+evidence:
+- 'corpus: hypothesis/significance/confidence content in a small but steady share of papers'
+- '2022 C/2200401: bootstrap confidence intervals for strategy returns'
+- '2021 A/2100010: two-sample tests before model comparison'
+requires:
+  model: false
+  dataset: true
+  required_fields:
+  - hypothesis
+  - test_statistic
+  - significance_level
+  - sample
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - statistic
+  - parameter
+  - sample_size
+  - p_value
+  typical_sections:
+  - Statistical Framework
+  - Hypothesis Testing
+  - Uncertainty Quantification
+  checklist:
+  - 零假设和备择假设写成一句话，不要只说'做检验'
+  - 检验的前提假设（正态性/方差齐性/独立性）要验证，不是假设
+  - p 值不要单独报，给出效应量和置信区间
+  - 多重比较要校正（Bonferroni / FDR）
+  - 样本量是否够：给出功效分析或明确承认不足
+purpose_cn: 假设检验、置信区间与不确定性量化。

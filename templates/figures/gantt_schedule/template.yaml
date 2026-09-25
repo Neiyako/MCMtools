@@ -1,0 +1,50 @@
+template_id: fig.gantt_schedule
+kind: figure
+version: 1.0.0
+purpose: Show when each task runs on a shared time axis, grouped by resource or owner.
+observed_in: the default figure of scheduling and routing sub-problems in the corpus
+evidence:
+- '2021 D/2109294: drone delivery sortie schedule across the operating day'
+- '2024 C/2402192: production line changeover plan over the planning horizon'
+- 'corpus: scheduling problems present the solution as a task-by-time bar chart rather than a table'
+backend: matplotlib
+figure_type: gantt
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - tasks
+  - starts
+  - durations
+inputs:
+- name: tasks
+  role: labels
+  type: array
+  optional: false
+- name: starts
+  role: independent_variable
+  type: array
+  optional: false
+- name: durations
+  role: metric
+  type: array
+  optional: false
+- name: groups
+  role: grouping
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{y_label} schedule of {n_tasks} tasks over {x_label}.'
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 每项任务在共享时间轴上的起止，按资源分组。

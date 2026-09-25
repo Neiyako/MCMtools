@@ -1,0 +1,48 @@
+template_id: fig.violin_split
+kind: figure
+version: 1.0.0
+purpose: Split violin that puts two groups back to back on one axis for direct distribution comparison.
+observed_in: the standard A/B comparison figure in medical and behavioural modelling papers; the corpus compares scenarios with side-by-side boxes instead
+evidence:
+- 'corpus: distribution-comparison figures appear in roughly a third of Outstanding papers, but always as separate panels'
+- '2023 C/2300348 Fig 3: score distribution compared across three test variants, drawn as separate violins'
+- '2021 D/2100803 Fig 5: grouped box plots of parameter estimates under each scenario'
+backend: matplotlib
+figure_type: box
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - groups
+  - values
+inputs:
+- name: groups
+  role: grouping
+  type: array
+  optional: false
+  description: 每个数值属于哪一组，只取前两组，长度必须和 values 一致
+- name: values
+  role: distribution
+  type: array
+  optional: false
+  description: 要比较分布的数值序列，与 groups 一一对应
+- name: group_labels
+  role: labels
+  type: array
+  optional: true
+  description: 两个组的显示名，缺省时用 groups 里首次出现的两个名字
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Split violin comparison of {y_label} between the two groups.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 两组分布左右分开的小提琴图，一眼看出差异。

@@ -1,0 +1,56 @@
+template_id: code.entropy_topsis
+kind: code
+version: 1.0.0
+description: Entropy weighting combined with TOPSIS for objective multi-criteria evaluation and ranking.
+purpose: Rank alternatives objectively, deriving weights from data dispersion rather than opinion.
+purpose_cn: 熵权法加 TOPSIS 综合评价：指标正向化、熵权客观赋权、贴近度排序与权重扰动稳健性检验。
+observed_in: the most common evaluation method across C/D/E papers
+evidence:
+- '2024 E: 综合评价是核心子问题'
+- '2023 C/2307166: 熵权法给出客观权重'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - decision_matrix
+  - directions
+inputs:
+- name: decision_matrix
+  role: dataset
+  type: matrix
+  optional: false
+  description: 方案乘指标的原始矩阵
+- name: directions
+  role: parameter
+  type: array
+  optional: false
+  description: 各指标方向，越大或越小越好
+- name: scheme_names
+  role: parameter
+  type: array
+  optional: true
+  description: 方案名称
+outputs:
+- name: weights
+  role: artifact
+  type: array
+  optional: false
+  description: 熵权
+- name: ranking
+  role: artifact
+  type: dataframe
+  optional: false
+  description: TOPSIS 贴近度与排名
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 权重图与排名图
+defaults:
+  perturb: 0.2
+  n_trials: 300
+entrypoint: code/entropy_topsis/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

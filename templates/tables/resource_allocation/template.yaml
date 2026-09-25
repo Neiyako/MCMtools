@@ -1,0 +1,35 @@
+template_id: tab.resource_allocation
+kind: table
+version: 1.0.0
+purpose: Show how a limited resource is allocated across recipients.
+observed_in: the deliverable table for allocation and scheduling problems
+evidence:
+- '2022 B/2202748 Table 3: allocation per region and per sector'
+- '2024 B/2400999 Table 4: line assignment by time block'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Recipient
+  - Allocated
+  - Share
+  - Utilisation
+  caption_template: Optimal allocation of {resource_label}.
+purpose_cn: 有限的资源如何在各接收方之间分配。

@@ -1,0 +1,58 @@
+template_id: code.multiobjective_pareto
+kind: code
+version: 1.0.0
+description: Multi-objective optimisation with NSGA-II style non-dominated sorting to obtain a Pareto
+  frontier.
+purpose: Expose the trade-off curve when objectives conflict, instead of a single arbitrary optimum.
+purpose_cn: 多目标优化与帕累托前沿：非支配排序加拥挤度遗传算法，输出权衡曲线、膝点推荐与决策变量构成。
+observed_in: common in optimisation-flavoured B/C problems
+evidence:
+- '2024 B: 多目标权衡是核心建模需求'
+- 'corpus: 帕累托前沿图是优化类论文的标准配图'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - objectives
+  - bounds
+inputs:
+- name: objectives
+  role: model
+  type: any
+  optional: false
+  description: 目标函数，返回最小化向量
+- name: bounds
+  role: parameter
+  type: any
+  optional: false
+  description: 决策变量上下界
+- name: n_pop
+  role: parameter
+  type: scalar
+  optional: true
+  description: 种群规模
+- name: n_gen
+  role: parameter
+  type: scalar
+  optional: true
+  description: 迭代代数
+outputs:
+- name: pareto_set
+  role: artifact
+  type: matrix
+  optional: false
+  description: 帕累托最优解集
+- name: figures
+  role: file
+  type: file
+  optional: false
+  description: 前沿图与权重构成图
+defaults:
+  n_pop: 120
+  n_gen: 80
+  n_vars: 5
+entrypoint: code/multiobjective_pareto/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

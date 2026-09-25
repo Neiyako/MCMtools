@@ -1,0 +1,37 @@
+template_id: exp.convergence_study
+kind: experiment
+version: 1.0.0
+description: Objective/error against iteration. The convergence iteration is itself a reported RESULT.
+observed_in: 22% of modern papers discuss convergence
+evidence:
+- '2016 C/47823: ''the algorithm converges after 50 iterations. It proves that our method is efficient
+  and powerful.'''
+- '2015 C/37284: ''we think 1000 K is a good point for GA to converge'''
+- '2016 A/44398: ''When the iteration is conducted for 379 times, the problem is nearly convergent'''
+- 'NOTE: convergence TOLERANCE is reported in 0 of 237 papers -- keep the field but expect it empty'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - varied
+  - held_fixed
+defaults:
+  aggregation: none
+caption_template: Convergence of {objective_label} over {max_iterations} iterations.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+  optional: false
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+  optional: false
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 目标值或误差随迭代变化，用来说明收敛性。

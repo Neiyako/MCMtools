@@ -1,0 +1,51 @@
+template_id: code.correlation_vif
+kind: code
+version: 1.0.0
+description: Correlation matrix with significance tests and Variance Inflation Factor diagnostics.
+purpose: Screen features and detect multicollinearity before fitting a regression.
+purpose_cn: 相关性分析与多重共线性诊断：相关系数矩阵、显著性检验、VIF 计算与剔除建议。
+observed_in: standard in regression-based problems; VIF tables are common in R1 data papers
+evidence:
+- '2022 B/2202748: 先做相关性筛选再建回归模型'
+- 'corpus: VIF 大于 10 是剔除变量的常见判据'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - features
+inputs:
+- name: features
+  role: dataset
+  type: dataframe
+  optional: false
+  description: 含因变量的数值表
+- name: target
+  role: parameter
+  type: scalar
+  optional: false
+  description: 因变量列名
+- name: vif_threshold
+  role: parameter
+  type: scalar
+  optional: true
+  description: VIF 阈值，默认 10
+outputs:
+- name: corr_matrix
+  role: artifact
+  type: matrix
+  optional: false
+  description: 相关系数矩阵
+- name: vif_table
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 各变量 VIF 与建议
+defaults:
+  vif_threshold: 10.0
+  method: pearson
+entrypoint: code/correlation_vif/snippet.py
+dependencies:
+- numpy
+- pandas
+- matplotlib
+backend: python

@@ -1,0 +1,36 @@
+template_id: tab.data_summary
+kind: table
+version: 1.0.0
+purpose: 'Describe each dataset: source, size, span, and known limitations.'
+observed_in: the data table that appears before modelling
+evidence:
+- '2024 B/2400999 Table 1: dataset / rows / span / notes'
+- 'corpus: data-description tables are near-universal in data-driven papers'
+requires:
+  model: false
+  dataset: true
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Dataset
+  - Source
+  - Records
+  - Span
+  - Limitations
+  caption_template: Summary of the data used.
+purpose_cn: 每个数据集的来源、规模、时间跨度与已知局限。

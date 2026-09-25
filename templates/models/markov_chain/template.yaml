@@ -1,0 +1,40 @@
+template_id: model.markov_chain
+kind: model
+version: 1.0.0
+description: State-transition model with a transition matrix and stationary distribution.
+observed_in: used for state evolution when transitions are probabilistic
+evidence:
+- 'corpus: Markov/transition content appears across C and D problems'
+- '2021 E/2100234: land-use transition Markov chain with stationary distribution'
+- '2019 C/1900011: customer state transitions in a subscription model'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - states
+  - transition_matrix
+  - initial_distribution
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - state
+  - transition_probability
+  - distribution
+  - parameter
+  typical_sections:
+  - Markov Model
+  - Stationary Distribution
+  - Long-Run Behaviour
+  checklist:
+  - 状态划分要互斥且完备（每条路径都能归类）
+  - 转移矩阵每行和必须为 1，给出估计方法
+  - 不可约性和非周期性要验证（否则稳态不存在或不唯一）
+  - 平稳分布的收敛时间（不是所有链都很快收敛）
+  - 转移概率的估计误差如何影响稳态
+purpose_cn: 马尔可夫链：状态转移矩阵与平稳分布。

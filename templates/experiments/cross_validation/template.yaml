@@ -1,0 +1,37 @@
+template_id: exp.cross_validation
+kind: experiment
+version: 1.0.0
+description: K-fold cross-validation as a model-selection or nested protocol.
+observed_in: 5% of 237 modern papers; strongly C-skewed
+evidence:
+- '2023 C/2301192: ''We performed 5-fold cross-validation on the dataset, and took the average of the
+  RMSE on the training and test sets'''
+- '2021 E/2016287: ''Since 10-fold cross validation is the most commonly used'''
+- '2021 C/2107870: ''K-Fold Cross Validation with k = 3 folds'''
+- '2020 A/2001334: ''introduction of k-fold cross validation to identify the final prediction model as
+  ARIMA(1,1,0)'''
+requires:
+  model: true
+  dataset: true
+  required_inputs:
+  - n_folds
+  - metrics
+defaults:
+  n_folds: 5
+  aggregation: mean_over_folds
+caption_template: '{n_folds}-fold cross-validation {metric_label}.'
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: K 折交叉验证，用于模型选择或嵌套评估。

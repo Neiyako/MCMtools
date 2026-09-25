@@ -1,0 +1,57 @@
+template_id: code.monte_carlo_ci
+kind: code
+version: 1.0.0
+description: Monte Carlo simulation with confidence intervals, event probabilities and convergence checks.
+purpose: Propagate input uncertainty to outputs and quantify risk.
+purpose_cn: 蒙特卡洛模拟与置信区间：输入分布抽样、指标分布、正态与 Bootstrap 区间、事件概率与收敛性检验。
+observed_in: extremely common for risk and robustness sub-questions
+evidence:
+- '2024 C: 不确定性传播用蒙特卡洛实现'
+- 'corpus: 模拟次数与收敛曲线是常见论证'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - simulate_once
+  - input_dist
+inputs:
+- name: simulate_once
+  role: model
+  type: any
+  optional: false
+  description: 单次随机实验函数
+- name: input_dist
+  role: parameter
+  type: any
+  optional: false
+  description: 输入变量的分布假设
+- name: n_sims
+  role: parameter
+  type: scalar
+  optional: true
+  description: 模拟次数
+outputs:
+- name: samples
+  role: artifact
+  type: array
+  optional: false
+  description: 各指标的模拟样本
+- name: intervals
+  role: artifact
+  type: any
+  optional: false
+  description: 置信区间与事件概率
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 分布图与收敛曲线
+defaults:
+  n_sims: 20000
+  alpha: 0.05
+  seed: 12345
+entrypoint: code/monte_carlo_ci/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

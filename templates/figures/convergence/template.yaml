@@ -1,0 +1,45 @@
+template_id: fig.convergence
+kind: figure
+version: 1.0.0
+purpose: Objective or error against iteration.
+observed_in: 22% of modern papers discuss convergence
+evidence:
+- '2016 C/47823: fitness figure, ''converges after 50 iterations'''
+- '2015 C/37284: ''1000 K is a good point for GA to converge'''
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - iterations
+  - objective
+  - converged_at
+inputs:
+- name: iterations
+  role: independent_variable
+  type: array
+  optional: false
+- name: objective
+  role: metric
+  type: array
+  optional: false
+- name: converged_at
+  role: annotation
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Convergence of {objective_label} over {n_iterations} iterations.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 目标值或误差随迭代次数的变化，用来看算法收没收敛。

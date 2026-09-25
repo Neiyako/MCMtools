@@ -1,0 +1,46 @@
+template_id: code.descriptive_stats
+kind: code
+version: 1.0.0
+description: Descriptive statistics plus normality testing (Shapiro, D'Agostino, Jarque-Bera) and QQ plots.
+purpose: Decide whether the data is normal, which determines parametric vs rank-based methods downstream.
+purpose_cn: 描述性统计与分布检验：偏度峰度、Shapiro/D'Agostino/JB 三重正态检验、QQ 图，并给出后续建模方法建议。
+observed_in: appears in the data-preprocessing section of most data-driven papers
+evidence:
+- 'corpus: 正态性检验决定后续用 t 检验还是秩检验'
+- '2023 C: 分布检验与 QQ 图常用于说明指标选取的合理性'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - values
+inputs:
+- name: values
+  role: dataset
+  type: array
+  optional: false
+  description: 一维数值序列或若干组
+- name: alpha
+  role: parameter
+  type: scalar
+  optional: true
+  description: 显著性水平，默认 0.05
+outputs:
+- name: stats_table
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 描述统计表
+- name: normality_result
+  role: metadata
+  type: any
+  optional: false
+  description: 各检验的结论
+defaults:
+  alpha: 0.05
+  bins: 30
+entrypoint: code/descriptive_stats/snippet.py
+dependencies:
+- numpy
+- pandas
+- matplotlib
+backend: python

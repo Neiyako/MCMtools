@@ -1,0 +1,36 @@
+template_id: exp.monte_carlo
+kind: experiment
+version: 1.0.0
+description: Repeated random sampling; report the distribution, not a single number.
+observed_in: 6% of 237 modern papers
+evidence:
+- '2020 A/2001334: ''bootstrap method is used to simulate 10000 possible prediction cases'''
+- '2022 D/2224178: ''Fifty simulations were performed for each scenario'''
+- '2021 C/2109298: 9 initializations, KL divergence between pairs'
+- '2023 A/2300661: ''we randomly generate 60 numbers between 0 and 1'''
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - n_runs
+  - sampling_distribution
+defaults:
+  n_runs: 1000
+  aggregation: mean_and_std
+  dispersion_kind: confidence_interval
+caption_template: Distribution of {metric_label} over {n_runs} Monte Carlo trials.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 重复随机抽样；报告分布而不是单次结果。

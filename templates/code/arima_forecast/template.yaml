@@ -1,0 +1,56 @@
+template_id: code.arima_forecast
+kind: code
+version: 1.0.0
+description: Time-series decomposition into trend/seasonal/residual plus forecasting with prediction intervals.
+purpose: Forecast a series and quantify uncertainty, decomposing the drivers first.
+purpose_cn: 时间序列分解与预测：移动平均提趋势、按周期提季节项，再用自回归外推并给出预测区间与回测误差。
+observed_in: very common in C/E problems with temporal data
+evidence:
+- '2023 C/2307166: 先分解趋势与季节再预测'
+- '2021 E: 时间序列预测是核心子问题之一'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - series
+inputs:
+- name: series
+  role: dataset
+  type: array
+  optional: false
+  description: 等间隔时间序列
+- name: period
+  role: parameter
+  type: scalar
+  optional: false
+  description: 季节周期，月度数据为 12
+- name: horizon
+  role: parameter
+  type: scalar
+  optional: true
+  description: 预测期数
+outputs:
+- name: forecast
+  role: artifact
+  type: array
+  optional: false
+  description: 预测值
+- name: interval
+  role: artifact
+  type: matrix
+  optional: false
+  description: 预测区间
+- name: metrics
+  role: metadata
+  type: any
+  optional: true
+  description: MAE/RMSE/MAPE
+defaults:
+  period: 12
+  horizon: 12
+  ar_order: 2
+entrypoint: code/arima_forecast/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

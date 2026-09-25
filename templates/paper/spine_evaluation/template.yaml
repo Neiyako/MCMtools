@@ -1,0 +1,84 @@
+template_id: paper.spine_evaluation
+kind: paper
+version: 1.0.0
+description: 'Section order for an evaluation problem: indicator system, weighting, ranking, validation.'
+observed_in: E problems are judged on whether the indicator system and the weighting are defensible
+evidence:
+- 'corpus: evaluation papers place the indicator system before any weighting method'
+- '2023 E/2307777: indicator system -> entropy weights -> TOPSIS ranking -> weight sensitivity'
+- '2021 C/2100123: AHP with consistency check -> ranking -> robustness'
+- 'Precedence constraints preserved: MODEL->SENS->SW, CONC->REF'
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  spine:
+  - order: 10
+    kind: introduction
+    title: Introduction
+    enabled: true
+    tier: mandatory
+  - order: 15
+    kind: restatement
+    title: Restatement of the Problem
+    enabled: true
+    tier: common
+  - order: 20
+    kind: data
+    title: Data Sources and Indicator Construction
+    enabled: true
+    tier: common
+  - order: 30
+    kind: assumptions
+    title: Assumptions and Justifications
+    enabled: true
+    tier: common
+  - order: 40
+    kind: notations
+    title: Notations
+    enabled: true
+    tier: common
+  - order: 50
+    kind: model
+    title: Indicator System and Weighting
+    enabled: true
+    tier: common
+  - order: 55
+    kind: solution
+    title: Comprehensive Evaluation and Ranking
+    enabled: true
+    tier: common
+  - order: 60
+    kind: sensitivity
+    title: Weight Sensitivity and Robustness
+    enabled: true
+    tier: common
+  - order: 70
+    kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    enabled: true
+    tier: common
+  - order: 80
+    kind: conclusion
+    title: Conclusion
+    enabled: true
+    tier: common
+  - order: 90
+    kind: references
+    title: References
+    enabled: true
+    tier: mandatory
+  - order: 100
+    kind: appendix
+    title: Appendix
+    enabled: true
+    tier: optional
+  - order: 110
+    kind: report_on_ai
+    title: Report on Use of AI
+    enabled: true
+    tier: mandatory
+  problem_type_note: 评价类题目：指标体系要论证为什么选这些指标（不是有什么用什么），权重来源要交代清楚，并且必须做权重扰动下的排名稳定性检验。
+purpose_cn: 评价题的章节顺序：指标体系、权重、排序、敏感性。

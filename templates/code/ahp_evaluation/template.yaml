@@ -1,0 +1,57 @@
+template_id: code.ahp_evaluation
+kind: code
+version: 1.0.0
+description: Analytic Hierarchy Process with pairwise comparison, eigenvalue weights and consistency ratio
+  check.
+purpose: Derive expert weights from pairwise judgements and prove they are not self-contradictory.
+purpose_cn: 层次分析法 AHP：判断矩阵正互反校验、三种算法求权重、一致性比率 CR 检验与方案总排序。
+observed_in: very frequent in evaluation and policy problems
+evidence:
+- '2022 B: AHP 用于确定指标权重'
+- 'corpus: CR 小于 0.1 的一致性检验是 AHP 必要环节'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - pairwise
+  - scheme_scores
+inputs:
+- name: pairwise
+  role: dataset
+  type: matrix
+  optional: false
+  description: Saaty 1-9 正互反判断矩阵
+- name: scheme_scores
+  role: dataset
+  type: matrix
+  optional: false
+  description: 方案在各指标上的得分
+- name: criteria_names
+  role: parameter
+  type: array
+  optional: true
+  description: 指标名称
+outputs:
+- name: weights
+  role: artifact
+  type: array
+  optional: false
+  description: 权重向量
+- name: consistency
+  role: metadata
+  type: any
+  optional: false
+  description: CI RI CR 与结论
+- name: ranking
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 方案总排序
+defaults:
+  scale: saaty_1_9
+  cr_threshold: 0.1
+entrypoint: code/ahp_evaluation/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

@@ -1,0 +1,44 @@
+id: EXP-002
+label: null
+kind: monte_carlo
+model_id: null
+dataset_id: null
+task_refs: []
+section_ref: '5'
+parent_experiment_ids: []
+variant_of: null
+removed_components: []
+supersedes: null
+motivation: null
+uncertainty_rationale: null
+varied: []
+held_fixed: []
+varied_axis: none
+method: bootstrap
+baseline_ref:
+  kind: none
+  ref: null
+  description: null
+n_runs: 1000
+n_folds: null
+aggregation: 2.5% and 97.5% quantiles
+perturbation: null
+readout_condition: March 1, 2023
+max_iterations: null
+convergence_criterion: null
+converged_at: null
+hyperparameters: {}
+train_test_split: null
+entrypoint: null
+software: null
+random_seed: null
+runtime_seconds: null
+status: completed
+failure_reason: null
+metrics: []
+result_atom_ids: []
+run_ids: []
+figure_ids: []
+table_ids: []
+claim_ids: []
+caveats: []

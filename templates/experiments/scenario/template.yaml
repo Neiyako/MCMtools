@@ -1,0 +1,32 @@
+template_id: exp.scenario
+kind: experiment
+version: 1.0.0
+description: Evaluate a model across named scenarios rather than a numeric sweep.
+observed_in: 7% of papers have a 'Case Study' heading; scenario comparison is common in E/F
+evidence:
+- '2023 B/2315379: ''Using Lingo, 3 scenarios are calculated'''
+- '2023 E/2314817: ''2.2.3 Application in 284 regions'''
+- '2023 B/2315379 7.3: ''Model Migration: Yellowstone National Park'''
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - scenarios
+defaults:
+  n_runs: 1
+caption_template: Results across {n_scenarios} scenarios.
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 用命名情景评估模型，而不是数值扫描。

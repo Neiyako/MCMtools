@@ -1,0 +1,47 @@
+template_id: model.mip_scheduling
+kind: model
+version: 1.0.0
+description: Mixed-integer or scheduling model with discrete decisions and side constraints.
+observed_in: the standard formulation for assignment, scheduling and facility-location problems
+evidence:
+- 'corpus: optimization/planning content in 9.0% of Outstanding papers'
+- '2024 B/2400999: binary line-selection variables for subway scheduling'
+- '2022 E/2203456: facility location with binary open/close decisions'
+requires:
+  model: false
+  dataset: true
+  required_fields:
+  - decision_variables
+  - objective
+  - constraints
+  - variable_domains
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - decision
+  - binary
+  - integer
+  - parameter
+  - objective
+  typical_sections:
+  - Model Formulation
+  - Solution Algorithm
+  - Optimality and Sensitivity
+  common_variable_types:
+  - binary
+  - integer
+  - continuous
+  - semi_continuous
+  checklist:
+  - 决策变量的定义域写清（0-1 / 非负整数 / 连续）
+  - 每条约束给编号和一句话解释，不要只列公式
+  - big-M 的取值依据（取太大会导致数值问题）
+  - 求解器给出的解是否为全局最优，说明 gap
+  - 小规模算例的穷举验证（证明模型实现没写错）
+purpose_cn: 混合整数规划或调度模型，含离散决策与时间窗。

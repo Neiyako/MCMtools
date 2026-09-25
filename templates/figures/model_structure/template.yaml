@@ -1,0 +1,42 @@
+template_id: fig.model_structure
+kind: figure
+version: 1.0.0
+purpose: Mindmap / framework showing models and data flow. Nearly every O-award paper has one.
+observed_in: ~1.1% of captions explicitly, but the 'mindmap'/'framework' figure is near-universal on the
+  first pages
+evidence:
+- '2024 A/2400996: ''Our solution mindmap is shown below'''
+- '2023 C/2309397 Fig 2: ''Our work'''
+- '2024 A/2400996: ''Figure 5: Mindmap for model I'''
+backend: drawio
+figure_type: diagram
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - models
+  - flows
+inputs:
+- name: models
+  role: structure
+  type: array
+  optional: false
+- name: flows
+  role: structure
+  type: array
+  optional: false
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: '{title}.'
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 模型框架图：有哪些模块、数据怎么流。Outstanding 论文几乎人手一张。

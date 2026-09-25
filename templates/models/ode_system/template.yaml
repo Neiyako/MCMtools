@@ -1,0 +1,35 @@
+template_id: model.ode_system
+kind: model
+version: 1.0.0
+description: System of ODEs / difference equations describing state evolution over time.
+observed_in: the most common model family across A/B/E; equation-heavy problems (A median 26 numbered
+  equations)
+evidence:
+- '2024 A/2400996 Model I: Lotka-Volterra modified for larval/adult banks, 19 numbered equations'
+- '2023 C/2307166 PCQL: ''an ODE model with 4 variables and 4 parameters'', derived from SIR'
+- '2022 B/2202748: Water and Electricity Transportation Model with objective + 3 constraints'
+- '2015 A/32150: SEIR Ebola model with a per-region parameter table (3 countries)'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - state_variables
+  - parameters
+  - equations
+  - assumptions
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - state
+  - parameter
+  - derived
+  typical_sections:
+  - Model Establishment
+  - Solution of the Model
+purpose_cn: 常微分方程组，描述状态如何连续演化。

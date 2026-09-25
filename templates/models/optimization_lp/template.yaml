@@ -1,0 +1,37 @@
+template_id: model.optimization_lp
+kind: model
+version: 1.0.0
+description: Linear / integer / multi-objective program with an explicit objective and constraints.
+observed_in: dominant in B/D/F; papers split 'Determination of decision variables and constraints' into
+  its own subsection
+evidence:
+- '2023 B/2315379: ''Determination of decision variables and constraints'' + a Decision-variables table
+  (X_j, Y_j, Z_j, W_j as 0-1 vars)'
+- '2022 B/2202748: ''The objective function is the minimum supply of water from the two dams'', constraints
+  eqs (7)-(9)'
+- '2016 A/44845: TWO competing objectives u(t) and sigma(t), both driven to zero'
+- '2022 B/2202748: solved with LINGO'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - decision_variables
+  - objective
+  - constraints
+  - parameters
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - decision
+  - parameter
+  - derived
+  typical_sections:
+  - Model Establishment
+  - Solution of the Model
+purpose_cn: 线性/整数/多目标规划，含明确的目标函数与约束。

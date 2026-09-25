@@ -1,0 +1,35 @@
+template_id: tab.convergence_report
+kind: table
+version: 1.0.0
+purpose: Report how the solution changes as resolution or iteration increases.
+observed_in: the evidence that a numerical answer is not an artefact of settings
+evidence:
+- 'corpus: convergence tables accompany 5.2% of Outstanding papers'
+- '2023 A/2322687 Table 2: grid resolution vs objective value'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Setting
+  - Objective
+  - Change vs previous
+  - Runtime (s)
+  caption_template: Convergence of {metric_label} with increasing resolution.
+purpose_cn: 分辨率或迭代增加时，解如何变化。

@@ -1,0 +1,50 @@
+template_id: model.queueing
+kind: model
+version: 1.0.0
+description: 'Queueing system: arrivals, service, number of servers, and waiting-time metrics.'
+observed_in: 7.7% of Outstanding papers model a service or waiting system
+evidence:
+- 'corpus: 12/155 Outstanding papers involve queue/waiting/arrival/service content'
+- '2023 B/2309821: charging-station queue with M/M/c service'
+- '2021 D/2100002: hospital triage waiting time under priority classes'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - arrival_process
+  - service_process
+  - servers
+  - discipline
+  - metrics
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - arrival_rate
+  - service_rate
+  - server_count
+  - utilization
+  - waiting_time
+  - parameter
+  typical_sections:
+  - Queueing Model
+  - Steady-State Analysis
+  - Simulation Validation
+  common_metrics:
+  - average_waiting_time
+  - average_queue_length
+  - server_utilization
+  - blocking_probability
+  - throughput
+  checklist:
+  - 到达过程写清分布（泊松？非齐次？），并给出拟合依据
+  - 服务时间分布写清，不要默认指数分布而不说明
+  - 给出租用率 rho，并讨论 rho -> 1 时等待时间发散的含义
+  - 稳态假设是否成立（是否需要瞬态分析）
+  - 解析解与仿真结果对照，两者对不上要解释
+purpose_cn: 排队系统：到达、服务、服务台数量与等待时间。

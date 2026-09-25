@@ -1,0 +1,62 @@
+template_id: paper.references
+kind: paper
+version: 1.0.0
+description: 'Reference list workflow: what to cite, which entries are required, and how the 200-entry
+  corpus precedent maps onto COMAP''s rules.'
+purpose: 'Build the References section: decide what must be cited, which entry types to use, and how to
+  disclose AI tool use as COMAP requires.'
+purpose_cn: 参考文献模板：哪些必须引、条目怎么写、AI 工具怎么按 COMAP 要求声明。
+observed_in: every paper has a References section (415/415), and every reference is cited in text (707/707
+  in a 60-paper sample) -- the one relationship that holds without exception
+evidence:
+- 'corpus: every paper ends with References; it is the terminal section'
+- 'corpus: 707/707 reference entries are cited in text, so uncited entries are a real defect'
+- 'corpus: "Literature Review" appears in 0/415 papers as a section title'
+- 'COMAP rules: AI tools must be disclosed in References, not only in text'
+inputs:
+- name: references
+  role: structure
+  type: array
+  optional: false
+  description: 条目列表，每项有 key / type / title / authors / year / venue
+- name: citation_style
+  role: parameter
+  type: scalar
+  optional: true
+  description: numeric 或 author_year
+outputs:
+- name: references_bib
+  role: artifact
+  type: file
+  optional: false
+  description: 生成的 references.bib
+- name: references_section
+  role: prose
+  type: file
+  optional: false
+  description: 论文里的参考文献节
+defaults:
+  citation_style: numeric
+  checklist:
+  - 每个条目都必须在正文里被引用过 —— 语料里 707/707 都是这样，未被引用的条目是实打实的缺陷
+  - 正文引用要用 \cite{key}，不要手写 [1] 这种数字 —— 手写的编号在增删条目后会全部错位
+  - 不设"文献综述"章节 —— 语料里 415 篇一次都没出现过。相关工作写在引言里
+  - 用了 AI 工具就必须在参考文献里列出来（ai_generated: true），只在正文里提一句不算
+  - 引用的数据来源（数据集、统计年鉴、网站）也要进参考文献，不能只在正文提一句
+  - 年份要写实际出版年；预印本写预印本年份并给出 URL
+  - 网络资源要带访问日期，否则评审无法核实
+  - 条目不要凑数。语料里 Outstanding 论文的引用数中位数不高，关键是每一条都被用到
+  entry_types:
+    article: 期刊论文
+    inproceedings: 会议论文
+    book: 专著
+    techreport: 技术报告
+    misc: 数据集、网站、软件、AI 工具
+  common_mistakes:
+  - 把 AI 工具写在致谢而不是参考文献 —— COMAP 明确要求后者
+  - 引了但正文里没 \cite —— 审计会报 ARTIFACT_NOT_CITED 同类问题
+  - 直接抄别人的文献列表：里面的条目你多半没读过，被追问就穿帮
+  - 用 "et al." 当作者名。BibTeX 要写全作者，用 and 连接
+requires:
+  required_inputs:
+  - references

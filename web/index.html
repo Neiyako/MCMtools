@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCMtools</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand">
+      <span class="brand-mark">MCM</span><span class="brand-sub">tools</span>
+    </div>
+    <div id="phase-badge" class="phase-badge">正在加载…</div>
+    <nav id="nav"></nav>
+    <div id="mode-indicator" class="mode-indicator"></div>
+  </aside>
+
+  <main id="main">
+    <header id="topbar">
+      <div>
+        <h1 id="screen-title">总览</h1>
+        <p id="screen-sub" class="sub"></p>
+      </div>
+      <div id="topbar-actions" class="actions"></div>
+    </header>
+    <section id="content"><div class="empty">正在加载…</div></section>
+  </main>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<div id="modal" class="modal-backdrop" hidden>
+  <div class="modal"><div id="modal-body"></div></div>
+</div>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

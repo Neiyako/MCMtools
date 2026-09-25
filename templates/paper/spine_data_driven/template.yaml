@@ -1,0 +1,85 @@
+template_id: paper.spine_data_driven
+kind: paper
+version: 1.0.0
+description: 'Section order for a data-driven problem: describe the data, then model it, then forecast.'
+observed_in: C problems are won by data handling quality; the corpus shows a data section precedes the
+  model in data-driven papers
+evidence:
+- 'corpus: C-problem papers lead with a data description section that A-problem papers lack'
+- '2023 C/2307166: data description -> model -> fitting -> prediction -> sensitivity'
+- '2022 C/2200401: data cleaning and feature construction before any model'
+- 'Precedence constraints preserved: INTRO->MODEL->SENS->SW, CONC->REF'
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  spine:
+  - order: 10
+    kind: introduction
+    title: Introduction
+    enabled: true
+    tier: mandatory
+  - order: 15
+    kind: restatement
+    title: Restatement of the Problem
+    enabled: true
+    tier: common
+  - order: 20
+    kind: data
+    title: Data Description and Preprocessing
+    enabled: true
+    tier: common
+  - order: 30
+    kind: assumptions
+    title: Assumptions and Justifications
+    enabled: true
+    tier: common
+  - order: 40
+    kind: notations
+    title: Notations
+    enabled: true
+    tier: common
+  - order: 50
+    kind: model
+    title: Model Establishment
+    enabled: true
+    tier: common
+  - order: 55
+    kind: solution
+    title: Solution and Calibration
+    enabled: true
+    tier: common
+  - order: 60
+    kind: sensitivity
+    title: Sensitivity Analysis
+    enabled: true
+    tier: common
+  - order: 70
+    kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    enabled: true
+    tier: common
+  - order: 80
+    kind: conclusion
+    title: Conclusion
+    enabled: true
+    tier: common
+  - order: 90
+    kind: references
+    title: References
+    enabled: true
+    tier: mandatory
+  - order: 100
+    kind: appendix
+    title: Appendix
+    enabled: true
+    tier: optional
+  - order: 110
+    kind: report_on_ai
+    title: Report on Use of AI
+    enabled: true
+    tier: mandatory
+  problem_type_note: 数据类题目：先讲清数据（来源、清洗、缺失、口径），再建模。数据处理的质量往往比模型选择更影响结果。
+purpose_cn: 数据挖掘/预测题的章节顺序：先讲数据，再讲模型。

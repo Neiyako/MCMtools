@@ -1,0 +1,122 @@
+#!/usr/bin/env python3
+"""MCMtools 一键启动（跨平台）。
+
+    ./start                     在当前目录启动
+    ./start ~/Desktop/我的项目   在指定目录启动
+    ./start --check             只检查环境
+
+Windows 上用 `py start` 或双击 `start.bat`；macOS/Linux 上用 `./start`。
+这个脚本也被 MCMtools.app 和 start.bat 调用 —— 也就是说**没有哪种启动方式
+拥有独占行为**，命令行能跑通的，双击也一定跑得通。
+
+它只要求系统里有一个 Python 3.9+。别的什么都不用预先装好。
+"""
+
+from __future__ import annotations
+
+import os
+import platform
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+MIN_PYTHON = (3, 9)
+
+
+def _version_ok(exe: str) -> bool:
+    """这个解释器够新吗。失败一律当不够新，不猜。"""
+    try:
+        out = subprocess.run(
+            [exe, "-c", "import sys;print('%d.%d' % sys.version_info[:2])"],
+            capture_output=True, text=True, timeout=15,
+            # Windows 上别弹出黑框。
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        if out.returncode != 0:
+            return False
+        major, minor = (int(x) for x in out.stdout.strip().split("."))
+        return (major, minor) >= MIN_PYTHON
+    except Exception:
+        return False
+
+
+def find_python() -> str:
+    """找一个可用的 Python 3.9+。
+
+    当前解释器够新就直接用（最常见的情况）。不够新才去搜 —— 因为
+    macOS 自带的 /usr/bin/python3 可能比依赖要求的版本还老。
+    """
+    if sys.version_info >= MIN_PYTHON:
+        return sys.executable
+
+    # 按平台给候选，顺序是「最可能装到新版」在前。
+    if platform.system() == "Windows":
+        candidates = ["py", "python3", "python"]
+    else:
+        candidates = [
+            "/opt/homebrew/bin/python3",   # Apple Silicon 的 Homebrew
+            "/usr/local/bin/python3",       # Intel Mac 的 Homebrew
+            "/usr/bin/python3",             # 系统自带（兜底）
+            "python3.13", "python3.12", "python3.11", "python3.10", "python3.9",
+            "python3",
+        ]
+
+    for cand in candidates:
+        if os.sep in cand or cand.startswith("/"):
+            exe = cand if os.access(cand, os.X_OK) else None
+        else:
+            exe = shutil.which(cand)
+        if exe and _version_ok(exe):
+            return exe
+
+    print(
+        f"MCMtools 需要 Python {MIN_PYTHON[0]}.{MIN_PYTHON[1]} 或更新版本。\n"
+        f"当前是 Python {sys.version_info.major}.{sys.version_info.minor}。\n\n"
+        "请先安装新版 Python，然后重新运行：\n"
+        "  macOS:   brew install python@3.12\n"
+        "  Windows: https://www.python.org/downloads/  （安装时勾选 Add to PATH）\n"
+        "  Linux:   sudo apt install python3 python3-pip\n",
+        file=sys.stderr,
+    )
+    raise SystemExit(1)
+
+
+def main() -> int:
+    # 两件事一起做：
+    #   line_buffering —— 双击启动时 stdout 是管道，缓冲会让横幅排在服务器
+    #     日志之后，用户看到的顺序就是乱的；
+    #   encoding=utf-8 —— Windows 控制台默认是 GBK，中文输出会变成乱码
+    #     甚至直接抛 UnicodeEncodeError 把启动打断。
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(line_buffering=True, encoding="utf-8",
+                               errors="replace")
+        except (AttributeError, OSError, ValueError):
+            pass
+
+    # Windows 上还要让控制台本身按 UTF-8 解读字节（chcp 65001）。
+    if platform.system() == "Windows":
+        try:
+            import ctypes
+
+            ctypes.windll.kernel32.SetConsoleOutputCP(65001)
+            ctypes.windll.kernel32.SetConsoleCP(65001)
+        except Exception:
+            pass  # 没有控制台（重定向到文件）时会失败，无所谓
+
+    exe = find_python()
+    # 换解释器重新执行自己。用 execv 而不是 subprocess，这样 Ctrl-C
+    # 直接打到真正在跑的那个进程上，不会留下一层壳。
+    if Path(exe).resolve() != Path(sys.executable).resolve():
+        os.execv(exe, [exe, str(HERE / "core" / "mcmstart.py")] + sys.argv[1:])
+
+    sys.path.insert(0, str(HERE / "core"))
+    from mcmcore.launcher import main as launch_main
+
+    return launch_main(sys.argv[1:])
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,105 @@
+symbols:
+- id: S11
+  glyph: P(t)
+  meaning: Potentials who might become TPers
+  role: state
+  time_varying: true
+- id: S12
+  glyph: C(t)
+  meaning: 'Crowd: normal TPers who get bored quickly'
+  role: state
+  time_varying: true
+- id: S13
+  glyph: Q(t)
+  meaning: 'Quitted: those tired of the game'
+  role: state
+  time_varying: true
+- id: S14
+  glyph: L(t)
+  meaning: 'Loyal: those who rarely give up'
+  role: state
+  time_varying: true
+- id: S1P1
+  glyph: beta
+  meaning: Participation Factor
+  role: parameter
+  time_varying: false
+- id: S1P2
+  glyph: gamma
+  meaning: Boredom Coefficient
+  role: parameter
+  time_varying: false
+- id: S1P3
+  glyph: lambda
+  meaning: Conversion Factor
+  role: parameter
+  time_varying: false
+- id: S1P4
+  glyph: phi
+  meaning: Loyal Player Boredom Coefficient
+  role: parameter
+  time_varying: false
+equations:
+- id: EQSIR1
+  number: S1
+  latex: \frac{dS}{dt} = -\beta S I / N
+  role: governing
+  is_numbered: false
+  uses: []
+- id: EQSIR2
+  number: S2
+  latex: \frac{dI}{dt} = \beta S I / N - \gamma I
+  role: governing
+  is_numbered: false
+  uses: []
+- id: EQ1
+  number: '1'
+  latex: \frac{dP}{dt} = -\beta P (C+L)/N
+  role: governing
+  is_numbered: true
+  uses: []
+- id: EQ2
+  number: '2'
+  latex: \frac{dC}{dt} = \beta P (C+L)/N - \gamma C - \lambda C
+  role: governing
+  is_numbered: true
+  uses: []
+- id: EQ3
+  number: '3'
+  latex: \frac{dQ}{dt} = \gamma C
+  role: governing
+  is_numbered: true
+  uses: []
+- id: EQ4
+  number: '4'
+  latex: \frac{dL}{dt} = \lambda C - \phi L
+  role: governing
+  is_numbered: true
+  uses: []
+assumptions:
+- id: A-PAPER-1
+  text: All Wordle players are Twitter users, and all Twitter users are potential
+    Wordle players.
+  scope: paper
+  label: Assumption 1
+  referenced_by: []
+- id: A-MODEL-1
+  text: TPers do TP everyday, and non-TPers never do TP.
+  scope: model
+  label: Consistency of Behavior
+  justification: Defines the compartment transition semantics of PCQL.
+  referenced_by: []
+- id: A-MODEL-2
+  text: Non-TPers transformed from TPers will never become TPers again.
+  scope: model
+  label: No Return
+  referenced_by: []
+objective:
+  expressions:
+  - \min \sum_t (\hat{y}_t - y_t)^2
+  sense: min
+  description: MSE loss used to estimate parameters.
+constraints: []
+notation_table:
+  exhaustive: false
+  unit_column: false

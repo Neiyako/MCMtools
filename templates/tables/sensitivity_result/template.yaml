@@ -1,0 +1,33 @@
+template_id: tab.sensitivity_result
+kind: table
+version: 1.0.0
+purpose: Sweep values against the resulting metric.
+observed_in: ~44 of 237 modern papers have a sensitivity-captioned table
+evidence:
+- '2022 B/2202748: ''beta 5% 10% 15% | Supply 55567 53722 52642'''
+- '2014 A/29282: ''Table 2/3/4: Sensitivity analysis of the parameter'''
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Parameter value
+  - Metric
+caption_template: Sensitivity of {metric_label} to {param_label}.
+purpose_cn: 参数扫描值与对应指标结果。

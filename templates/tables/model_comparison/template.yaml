@@ -1,0 +1,36 @@
+template_id: tab.model_comparison
+kind: table
+version: 1.0.0
+purpose: Compare several candidate models across accuracy and cost metrics.
+observed_in: the standard 'model comparison' table in data-driven papers
+evidence:
+- '2024 C/2400888 Table 3: model vs RMSE/MAE/R2 for five candidates'
+- 'corpus: comparison tables appear in ~30% of Outstanding papers'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Model
+  - RMSE
+  - MAE
+  - R2
+  - Runtime (s)
+  caption_template: Comparison of candidate models on {metric_label}.
+purpose_cn: 在同一套协议下对比多个候选模型或算法。

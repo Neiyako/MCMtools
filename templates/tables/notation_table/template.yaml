@@ -1,0 +1,35 @@
+template_id: tab.notation_table
+kind: table
+version: 1.0.0
+purpose: Symbol glossary rendered from model-scoped symbols, with the standard non-exhaustive disclaimer.
+observed_in: 56% of papers; ALWAYS carries a 'some variables are not listed' note
+evidence:
+- 'Near-universal: ''There are some variables that are not listed here and will be discussed in detail
+  in each section.'' (5 papers verbatim)'
+- 2023 F/2311258 and 2023 E/2312411 carry a real Unit column with '/' for dimensionless
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Symbol
+  - Definition
+  - Unit
+caption_template: Notations.
+purpose_cn: 符号表，由模型里的符号自动生成并标注定义位置。

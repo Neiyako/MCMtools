@@ -1,0 +1,41 @@
+template_id: fig.sankey_flow
+kind: figure
+version: 1.0.0
+purpose: Show how a quantity is distributed and re-routed across stages of a system.
+observed_in: the standard figure for resource flow, material balance and state transition
+evidence:
+- '2022 D/2224178 Fig 6: port freight volume routed through transshipment stages'
+- '2023 E/2309888: land-use conversion flows between categories over the planning horizon'
+- 'corpus: flow figures appear in every problem that rests on a conservation / mass-balance argument'
+backend: matplotlib
+figure_type: flow
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - stages
+  - flows
+inputs:
+- name: stages
+  role: structure
+  type: array
+  optional: false
+- name: flows
+  role: structure
+  type: array
+  optional: false
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Flow of {y_label} between {n_stages} stages of the system.
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 一个量在多个阶段之间如何分配和改道。

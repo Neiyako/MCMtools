@@ -1,0 +1,52 @@
+template_id: fig.surface_3d
+kind: figure
+version: 1.0.0
+purpose: Show how an objective responds to two parameters at once, with the response level projected onto
+  the base plane.
+observed_in: 11.6% of Outstanding papers contain a 3-D figure, nearly always a response surface over two
+  swept parameters
+evidence:
+- 'corpus: 18/155 Outstanding papers contain a 3-D surface or 3-D scatter'
+- '2021 A/2100454: decomposition response surface over the two sweep parameters'
+- '2022 B/2203144 Fig 5: profit surface over price and inventory policy'
+backend: matplotlib
+figure_type: surface
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y
+  - z
+inputs:
+- name: x
+  role: parameter_1
+  type: array
+  optional: false
+- name: y
+  role: parameter_2
+  type: array
+  optional: false
+- name: z
+  role: response
+  type: matrix
+  optional: false
+- name: z_label
+  role: label
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Response surface of {z_label} over {x_label} and {y_label}.
+defaults:
+  format: pdf
+  width_in: 6.2
+latex: \includegraphics[width=0.85\linewidth]{{{file}}}
+purpose_cn: 目标值同时随两个参数变化的三维曲面。

@@ -1,0 +1,56 @@
+template_id: code.ode_solve
+kind: code
+version: 1.0.0
+description: Solve a system of ODEs with hand-written RK4, cross-checked against scipy solve_ivp.
+purpose: Simulate any continuous-time dynamic model and validate the numerical solution.
+purpose_cn: 常微分方程组求解：手写四阶龙格-库塔加 scipy 对照，含守恒量自检、相图与峰值分析。
+observed_in: the dominant method family for A/B physical and epidemic problems
+evidence:
+- '2024 A/2400996 Model I: 19 个方程的动力学模型'
+- '2015 A/32150: SEIR 传染病模型逐地区求解'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - derivs
+  - initial_state
+inputs:
+- name: derivs
+  role: model
+  type: any
+  optional: false
+  description: 方程组 dy/dt = f(t, y)
+- name: initial_state
+  role: parameter
+  type: array
+  optional: false
+  description: 初值向量
+- name: t_end
+  role: parameter
+  type: scalar
+  optional: true
+  description: 模拟时长
+- name: dt
+  role: parameter
+  type: scalar
+  optional: true
+  description: 积分步长
+outputs:
+- name: trajectory
+  role: artifact
+  type: matrix
+  optional: false
+  description: 各时刻状态矩阵
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 演化图与相图
+defaults:
+  t_end: 160.0
+  dt: 0.1
+  method: rk4
+entrypoint: code/ode_solve/snippet.py
+dependencies:
+- numpy
+backend: python

@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+web/tests/_probe*.mjs
+web/tests/_staged_*.mjs
+examples/*/build/
+.DS_Store
+examples/*/runs/
+runs/
+
+# macOS .app 是 build-app.sh 的产物，且带本机代码签名，不入库
+MCMtools.app/

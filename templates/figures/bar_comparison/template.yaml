@@ -1,0 +1,45 @@
+template_id: fig.bar_comparison
+kind: figure
+version: 1.0.0
+purpose: Compare a metric across models or scenarios, optionally with dispersion.
+observed_in: ~3.8% of captions; the standard companion to a comparison table
+evidence:
+- '2023 C/2310767: 5-model metric comparison'
+- '2017 D/55295: queue-size comparison between greedy and original model'
+backend: matplotlib
+figure_type: bar
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - categories
+  - values
+  - errors
+inputs:
+- name: categories
+  role: labels
+  type: array
+  optional: false
+- name: values
+  role: metric
+  type: array
+  optional: false
+- name: errors
+  role: dispersion
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Comparison of {metric_label} across {n_categories} candidates.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 跨模型或跨方案对比同一个指标，可带误差棒。

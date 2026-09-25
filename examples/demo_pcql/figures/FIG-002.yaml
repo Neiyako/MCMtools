@@ -1,0 +1,24 @@
+id: FIG-002
+template_id: fig.pred_vs_actual
+experiment_id: EXP-002
+model_id: null
+bindings:
+- atom_id: RES-1102
+  role: error
+  format: null
+- atom_id: RES-1101
+  role: y
+  format: null
+- atom_id: RES-1103
+  role: error
+  format: null
+file: figures/FIG-002.pdf
+format: pdf
+width_in: 6.0
+dpi: null
+caption: Bootstrap prediction interval for March 1, 2023.
+caption_source: human
+label: fig:bootstrap
+referenced_in: []
+status: missing
+generated_at: null

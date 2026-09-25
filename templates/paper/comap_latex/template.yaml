@@ -1,0 +1,73 @@
+template_id: paper.comap_latex
+kind: paper
+version: 1.0.0
+description: 'COMAP MCM/ICM paper skeleton: summary sheet page 1, fixed section spine, 25-page budget.'
+observed_in: 318/415 papers (76.6%) carry the official summary-sheet form; 72.1% of 2022-2025 papers are
+  EXACTLY 25 pages
+evidence:
+- 'Official template: MCM-ICM-master/2021美赛特等奖/problems/MCM-ICM_2021_Summary.tex'
+- 'Official preamble: \documentclass[12pt]{article}, geometry left=1in right=0.75in top=1in bottom=1in,
+  newtxtext + newtxmath, fancyhdr with \rhead{Page \thepage}'
+- 'Summary sheet is a FORM not a heading: a 3-column tabular with Problem Chosen / YEAR MCM-ICM Summary
+  Sheet / Team Control Number'
+- 'Table of contents is now UNIVERSAL: 100% of 2022-2025 papers (86/86)'
+- 'COMAP AI policy: append a page-limit-EXEMPT ''Report on Use of AI'' section after the 25-page solution'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - problem_letter
+  - team_control_number
+inputs:
+- name: problem_letter
+  type: scalar
+  role: metadata
+  description: A-F
+- name: team_control_number
+  type: scalar
+  role: metadata
+- name: sections
+  type: array
+  role: content
+- name: result_atoms
+  type: array
+  role: numbers
+  description: Every number in the prose is a reference to one of these
+- name: figures
+  type: array
+  role: artifact
+- name: tables
+  type: array
+  role: artifact
+- name: references
+  type: array
+  role: bibliography
+outputs:
+- name: latex
+  type: file
+  role: artifact
+  description: main.tex + sections/
+- name: pdf
+  type: file
+  role: artifact
+  description: Compiled PDF
+- name: page_count
+  type: scalar
+  role: metric
+  description: Against the 25-page budget
+defaults:
+  engine: pdflatex
+  page_limit: 25
+  toc: true
+  documentclass: '[12pt]{article}'
+  packages:
+  - geometry
+  - newtxtext
+  - amsmath
+  - amssymb
+  - amsthm
+  - newtxmath
+  - graphicx
+  - fancyhdr
+reference_file: MCM-ICM_Summary.tex
+purpose_cn: COMAP MCM/ICM 论文骨架：第一页摘要表 + 固定章节顺序。

@@ -1,0 +1,61 @@
+template_id: code.graph_shortest_path
+kind: code
+version: 1.0.0
+description: Dijkstra and Floyd-Warshall shortest paths, minimum spanning tree and network centrality.
+purpose: Solve routing, connectivity and critical-node questions on a network.
+purpose_cn: 图论最短路与网络分析：Dijkstra、Floyd 全源最短路、Kruskal 最小生成树与三类中心性指标。
+observed_in: common in logistics, network and infrastructure problems
+evidence:
+- '2022 B/2202748: 运输网络建模需要最短路'
+- 'corpus: 网络分析常用于选址与路径优化'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - nodes
+  - edges
+inputs:
+- name: nodes
+  role: dataset
+  type: array
+  optional: false
+  description: 节点列表
+- name: edges
+  role: dataset
+  type: matrix
+  optional: false
+  description: 带权边 u v w 列表
+- name: source
+  role: parameter
+  type: scalar
+  optional: true
+  description: 起点
+- name: target
+  role: parameter
+  type: scalar
+  optional: true
+  description: 终点
+outputs:
+- name: shortest_path
+  role: artifact
+  type: array
+  optional: false
+  description: 最短路径节点序列
+- name: distance_matrix
+  role: artifact
+  type: matrix
+  optional: false
+  description: 全源最短距离矩阵
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 网络图与距离矩阵热力图
+defaults:
+  directed: false
+  weight: distance
+entrypoint: code/graph_shortest_path/snippet.py
+dependencies:
+- numpy
+- matplotlib
+backend: python

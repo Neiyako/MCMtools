@@ -1,0 +1,57 @@
+template_id: code.regression_diagnostics
+kind: code
+version: 1.0.0
+description: OLS regression with a four-panel residual diagnostic suite.
+purpose: 'Fit a regression and prove its assumptions hold: linearity, homoscedasticity, normality, influence.'
+purpose_cn: 回归建模与残差诊断：OLS 系数表（含 p 值与置信区间）、残差四联诊断图、异方差与强影响点检验。
+observed_in: the single most reused code block in data-driven MCM papers
+evidence:
+- '2024 A/2400996: 回归系数表加残差图是模型检验章节标配'
+- 'corpus: 残差诊断四联图出现率极高'
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - features
+  - target
+inputs:
+- name: features
+  role: dataset
+  type: dataframe
+  optional: false
+  description: 自变量矩阵
+- name: target
+  role: dataset
+  type: array
+  optional: false
+  description: 因变量
+- name: cook_threshold
+  role: parameter
+  type: scalar
+  optional: true
+  description: 库克距离阈值，常用 4/n
+outputs:
+- name: coefficients
+  role: artifact
+  type: dataframe
+  optional: false
+  description: 回归系数表
+- name: diagnostics
+  role: metadata
+  type: any
+  optional: false
+  description: 诊断问题清单
+- name: figure
+  role: file
+  type: file
+  optional: false
+  description: 四联诊断图
+defaults:
+  cook_threshold: 0.04
+  alpha: 0.05
+entrypoint: code/regression_diagnostics/snippet.py
+dependencies:
+- numpy
+- pandas
+- matplotlib
+backend: python

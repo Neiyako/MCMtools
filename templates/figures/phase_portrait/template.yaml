@@ -1,0 +1,58 @@
+template_id: fig.phase_portrait
+kind: figure
+version: 1.0.0
+purpose: Show the trajectory of a dynamical system in state space, optionally against its vector field.
+observed_in: the standard diagnostic for ODE models; corpus papers show state curves over time but rarely
+  the phase plane itself
+evidence:
+- 'corpus: dynamical-system problems (2020 A, 2021 B, 2024 C) plot only state-versus-time curves'
+- '2020 A/2001624: phase-plane stability discussed analytically without a phase portrait'
+- '2024 C/2400521: trajectory reported as two separate time series rather than one orbit'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y
+inputs:
+- name: x
+  role: state_1
+  type: array
+  optional: false
+- name: y
+  role: state_2
+  type: array
+  optional: false
+- name: t
+  role: independent_variable
+  type: array
+  optional: true
+- name: start
+  role: event_marker
+  type: array
+  optional: true
+- name: field_x
+  role: vector_field
+  type: array
+  optional: true
+- name: field_y
+  role: vector_field
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Phase portrait of {y_label} against {x_label}.
+defaults:
+  format: pdf
+  width_in: 5.6
+latex: \includegraphics[width=0.75\linewidth]{{{file}}}
+purpose_cn: 动力学系统在状态空间里的轨迹，可选画向量场。

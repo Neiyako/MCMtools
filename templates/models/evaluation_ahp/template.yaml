@@ -1,0 +1,35 @@
+template_id: model.evaluation_ahp
+kind: model
+version: 1.0.0
+description: Composite-index / multi-criteria evaluation (AHP, entropy weight, TOPSIS).
+observed_in: 'dominant in E/F: entropy weight 128 occurrences, TOPSIS 100, AHP consistency ratio 31'
+evidence:
+- '2023 F/2311258: Glossary with a Unit column (kt, %, /) feeding a GGDP composite index'
+- '2023 E/2312411: ''Construction of EWM-TOPSIS Evaluation Model'''
+- '2023 D/2300229: ''Weight Entropy Method Model'', ''TOPSIS Model'''
+- '2023 E/2314817: four risk bands Slight/Moderate/Serious/Severe with numeric ranges'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - index_system
+  - weights
+  - normalization
+  - aggregation
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: evaluation
+  symbol_roles:
+  - index
+  - parameter
+  - derived
+  - output_metric
+  typical_sections:
+  - Evaluation Index System
+  - Model Construction
+purpose_cn: 综合评价：AHP、熵权法等，把多个指标合成一个得分。

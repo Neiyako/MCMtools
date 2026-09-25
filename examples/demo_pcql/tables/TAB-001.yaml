@@ -1,0 +1,44 @@
+id: TAB-001
+template_id: tab.parameter_settings
+experiment_id: null
+model_id: null
+columns:
+- header: Symbol
+  literal: beta
+- header: Meaning
+  literal: Participation Factor
+- header: Value
+  atom_id: RES-1001
+  format: '%.2e'
+- header: Source
+  literal: fitted (MSE)
+rows:
+- literal: gamma
+  atom_ids:
+  - RES-1002
+- literal: lambda
+  atom_ids:
+  - RES-1003
+- literal: phi
+  atom_ids:
+  - RES-1004
+bindings:
+- atom_id: RES-1001
+  role: input
+  format: null
+- atom_id: RES-1002
+  role: input
+  format: null
+- atom_id: RES-1003
+  role: input
+  format: null
+- atom_id: RES-1004
+  role: input
+  format: null
+file: null
+caption: Fitted parameter values for the PCQL Model.
+label: tab:params
+referenced_in:
+- SEC-050
+status: missing
+generated_at: null

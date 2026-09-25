@@ -1,0 +1,37 @@
+template_id: exp.sensitivity_grid
+kind: experiment
+version: 1.0.0
+description: Two-parameter response surface, usually rendered as a heat map.
+observed_in: ~5% of modern papers
+evidence:
+- '2021 A/2100454: ''We design a heat map for explaining how these parameters affect total decomposition
+  rate'''
+- '2022 D/2224178: ''We changed the lambda_3 and lambda_9 ... continuously in units of 0.01 from 0.01
+  to 1'''
+- '2022 C/2200401 Fig 6: ''Heat map, ACF and PACF figure'''
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - varied
+  - held_fixed
+  - model_id
+defaults:
+  n_runs: 1
+  aggregation: none
+caption_template: '{title} heat map over {x_label} and {y_label}.'
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 双参数响应曲面，通常画成热力图。

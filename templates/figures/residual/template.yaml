@@ -1,0 +1,45 @@
+template_id: fig.residual
+kind: figure
+version: 1.0.0
+purpose: Residual diagnostics.
+observed_in: ~2% of papers have an 'Error Analysis' heading
+evidence:
+- 2023 C/2309397 section 5.4 'Error Analysis'
+- '2020 A/2001334: pairwise RMSE combined into a Q-Q plot (Figure 16)'
+backend: matplotlib
+figure_type: scatter
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - predicted
+  - residual
+  - zero_line
+inputs:
+- name: predicted
+  role: reference
+  type: array
+  optional: false
+- name: residual
+  role: metric
+  type: array
+  optional: false
+- name: zero_line
+  role: reference
+  type: scalar
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Residuals of the {model_label}.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 残差诊断。残差里的系统性模式就是模型缺陷的指纹。

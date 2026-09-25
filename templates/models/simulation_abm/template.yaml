@@ -1,0 +1,33 @@
+template_id: model.simulation_abm
+kind: model
+version: 1.0.0
+description: Agent-based / stochastic simulation producing distributions rather than point estimates.
+observed_in: 72% of papers mention simulation; ABM and Monte Carlo concentrated in A/C/D
+evidence:
+- '2023 A/2322687: plant community ABM with snapshots at t=1000'
+- '2015 D/34985: Zambia ABM, GA vs Nelder-Mead vs Powell'
+- '2017 D/55295: queueing network simulated with NetLogo BehaviorSpace, 3 trials per parameter set'
+- '2020 A/2001334: 10000 bootstrap migration simulations -> survival distribution'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - agents_or_entities
+  - transition_rules
+  - n_runs
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: simulation
+  symbol_roles:
+  - state
+  - parameter
+  - output_metric
+  typical_sections:
+  - Simulation Design
+  - Results and Analysis
+purpose_cn: 智能体仿真：反复随机抽样，输出分布而不是单个值。

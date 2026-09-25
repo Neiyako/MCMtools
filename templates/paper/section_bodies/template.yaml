@@ -1,0 +1,227 @@
+template_id: paper.section_bodies
+kind: paper
+version: 1.0.0
+description: '每个章节的可直接填空骨架：写什么、按什么顺序写、哪里插图表、 哪里引用结果数字。语料显示 72.1% 的 2022-2025 论文正好 25 页， 所以每节还带建议篇幅 ——
+  动笔时就知道该写多长。
+
+  '
+observed_in: '152 篇有完整章节结构的论文；各节内部写法由出现频次最高的写法归纳。
+
+  '
+evidence:
+- Introduction 在 108/152 篇中排第一（71.1%）
+- Literature Review 在 415 篇中出现 0 次 —— 绝不模板化
+- 83% 的论文讨论弱点，45% 有独立小节
+- 69% 的论文在正文中重复同一个精确数字
+- 只有 37% 的图被正文交叉引用 —— 所以骨架里显式留了图表引用位
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  bodies:
+  - kind: introduction
+    title: Introduction
+    budget_pages: 1.5
+    body: '% 背景：这个现象为什么值得建模。一句话说清，不要铺垫。
+
+      {{background}}
+
+
+      % 已有研究做到哪一步、留下什么缺口。缺口必须直接对应你下面要做的事，
+
+      % 否则这段只是装饰。（注：语料里 415 篇论文无一单独设 Literature Review 节，
+
+      % 相关工作并进引言即可。）
+
+      {{prior_work_and_gap}}
+
+
+      % 本文做了什么。读完这段读者就该知道全文结构。
+
+      We build {{model_name}}, estimate its parameters by {{method}}, and
+
+      validate it through {{validation}}.
+
+      '
+    checklist:
+    - 背景是否一句话说清
+    - 缺口是否直接对应你的贡献
+    - 是否交代了全文结构
+  - kind: assumptions
+    title: Assumptions and Justifications
+    budget_pages: 1.0
+    body: "% 每条假设都必须给理由。只写\"假设参数恒定\"是没写完。\n% 要写：为什么可以这么假设、它简化掉了什么、敏感性分析里怎么检验它。\n\\begin{enumerate}\n \
+      \ \\item {{assumption_text}}\n  \\par\\noindent\\textbf{Justification:} {{justification}}\n\\end{enumerate}\n"
+    checklist:
+    - 每条假设都写了理由
+    - 假设与后文模型一致（别假设了却没用上）
+  - kind: notations
+    title: Notations
+    budget_pages: 0.5
+    body: '% 注意：符号表由 math/math.yaml **自动生成**，不要在这里手写。
+
+      % 手写的符号表必然与正文脱节 —— 改了一个符号忘改表，评审一眼看出来。
+
+      % 这一节的正文留空即可，编译器会填入 generated/notations。
+
+      '
+    checklist:
+    - 是否加了「符号表非穷尽」说明（语料惯例）
+  - kind: model
+    title: Model
+    budget_pages: 5.0
+    body: "% 先说直觉，再上公式。直接甩公式读者跟不上。\n{{model_intuition}}\n\n\\begin{equation}\n  {{equation}}\n  \\label{eq:{{label}}}\n\
+      \\end{equation}\n\n% 每个符号第一次出现都要解释，并与符号表一致。\nHere ${{symbol}}$ denotes {{symbol_meaning}}.\n\n\\\
+      subsection{Solution Method}\n\n% 数值方法、步长、收敛判据都要写清楚，否则不可复现。\n{{solution_method}}\n"
+    checklist:
+    - 公式是否都编号了
+    - 每个符号是否都解释了
+    - 求解方法可否复现（步长、判据）
+  - kind: sensitivity
+    title: Sensitivity Analysis
+    budget_pages: 1.5
+    body: '% 86% 的论文做敏感性分析。只变一个参数时**必须说明其他参数固定不变**
+
+      % —— 否则分析无效。这条是审计的硬性检查。
+
+      We vary {{varied}} one at a time while holding {{held_fixed}} fixed, and
+
+      record the response of {{metric}}.
+
+
+      % 图不用手写 includegraphics：生图工作台生成后，编译器会把它
+
+      % 自动插进引用它的那一节。正文里只要写 \ref{fig:你的标签} 即可，
+
+      % 漏引用会被审计报 ARTIFACT_NOT_CITED。
+
+      '
+    checklist:
+    - 是否说明了其他参数保持不变
+    - 是否有图或表支撑结论
+    - 正文是否引用了这张图（\ref）
+  - kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    budget_pages: 1.0
+    body: '\subsection{Strengths}
+
+
+      % 优点要具体到"因此能得到什么结论"，不要写"模型很准确"这类空话。
+
+      {{strengths}}
+
+
+      \subsection{Weaknesses}
+
+
+      % 缺点必须诚实，并说明影响范围和补救办法。
+
+      % 把模型的失败调掉而不是写出来，是评审最容易识破的地方。
+
+      {{weaknesses}}
+
+      '
+    checklist:
+    - 缺点是否具体（不是「计算量较大」这类空话）
+    - 是否说明了失效条件
+  - kind: conclusion
+    title: Conclusion
+    budget_pages: 0.5
+    body: '% 结论不是摘要的复制。这里只写：得到了什么、边界在哪、下一步做什么。
+
+      {{summary_of_findings}}
+
+
+      % 明确写出结论成立的边界条件 —— 这是"结论"和"过度声称"的分界线。
+
+      {{scope_and_limitations}}
+
+      '
+    checklist:
+    - 是否与摘要措辞重复
+  - kind: references
+    title: References
+    budget_pages: 0.5
+    body: '% 参考文献同样自动生成（见 generated/references.bib）。
+
+      % COMAP 要求 AI 工具出现在参考文献里，report_on_ai 节会自动带上。
+
+      '
+    checklist:
+    - 是否所有引用都在正文出现过
+  - kind: restatement
+    body: "% 用自己的话重述题目，不要复制题面。\n% 目的是让读者知道你**理解**了要解决什么，以及你划定的范围。\nWe are given {{data_description}}.\
+      \ Writing {{notation}} for {{meaning}},\nwe address {{n_tasks}} tasks.\n\n\\begin{enumerate}\n \
+      \ \\item {{task_one}}\n  \\item {{task_two}}\n\\end{enumerate}\n\n% 明确写出哪些内容不在范围内。主动划边界比被评审指出边界好。\n\
+      {{scope_exclusions}}\n"
+  - kind: data
+    body: '% 数据类题目的第一要务是把数据讲清楚：来源、口径、清洗、缺失。
+
+      % 数据处理的质量往往比模型选择更影响最终结果。
+
+      The data consist of {{data_description}}, covering {{data_span}} with
+
+      {{data_records}} records.
+
+
+      \subsection{Preprocessing}
+
+
+      % 每一步清洗都要说"为什么"：为什么这样处理缺失值，为什么剔除这些样本。
+
+      % 只写"我们做了数据清洗"等于没写。
+
+      {{preprocessing}}
+
+
+      % 数据来源要诚实。合成数据就写合成数据，不要含糊。
+
+      % source.kind 字段会在审计时核对。
+
+      {{provenance}}
+
+      '
+  - kind: solution
+    body: '% 求解/标定/验证这一节是"结果可信"的证据所在。
+
+      % 只报最终数值不给方法是这类题最常见的失分点。
+
+      \subsection{Solution Method}
+
+
+      % 算法、步长、迭代次数、收敛判据、随机种子，缺一不可复现。
+
+      {{method}}
+
+
+      \subsection{Results}
+
+
+      % 数字一律用宏引用，不要手写 —— 重跑一次就会对不上。
+
+      The fit achieves $R^{2} = {{r_squared_macro}}$ with RMSE {{rmse_macro}}.
+
+
+      % 模型在哪失败要说出来。藏着不说，评审会替你发现，而且减分更多。
+
+      {{known_failures}}
+
+      '
+  - kind: scenario
+    body: '% 情景对比是政策类题目的核心：方案之间的差别必须能一眼看出来。
+
+      We compare {{scenarios}} under a common evaluation criterion.
+
+
+      % 表同理，由表格模板生成后自动放置，正文里写 \ref{tab:你的标签} 引用。
+
+      % 每个情景要给出：设定、目标值、关键指标、是否可行。
+
+
+      % 说明结论成立的边界条件：在什么情况下推荐方案会失效。
+
+      {{robustness}}
+
+      '

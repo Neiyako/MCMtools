@@ -1,0 +1,42 @@
+template_id: model.regression_advanced
+kind: model
+version: 1.0.0
+description: Regularised or nonlinear regression with model selection and diagnostics.
+observed_in: the workhorse for data-driven problems; regularisation is what separates strong papers
+evidence:
+- 'corpus: regression/prediction content in 11.6% of Outstanding papers'
+- '2023 C/2307166: least squares fit of an epidemic model with a residual diagnostic'
+- '2022 C/2200401: ridge regression for return prediction with cross-validation'
+requires:
+  model: false
+  dataset: true
+  required_fields:
+  - response
+  - predictors
+  - link_function
+  - regularisation
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - response
+  - predictor
+  - coefficient
+  - residual
+  - parameter
+  typical_sections:
+  - Model Specification
+  - Estimation and Selection
+  - Diagnostics
+  checklist:
+  - 残差诊断三件套：残差图、Q-Q 图、残差 vs 拟合值
+  - 多重共线性检查（VIF），高 VIF 要说怎么处理
+  - 交叉验证给出折数和划分方式，不要只报训练误差
+  - 正则化强度怎么选的（CV 曲线要画出来）
+  - 过拟合的证据要主动检查：训练/验证误差的差距
+purpose_cn: 正则化或非线性回归，含模型选择与诊断。

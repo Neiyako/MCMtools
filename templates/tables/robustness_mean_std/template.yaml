@@ -1,0 +1,35 @@
+template_id: tab.robustness_mean_std
+kind: table
+version: 1.0.0
+purpose: Multi-run robustness results as mean and dispersion per condition.
+observed_in: the single best-instrumented multi-run table in the corpus
+evidence:
+- '2017 F/64486 Table 8: ''1% random noise of initial value (mean and standard value at year 50 of 30
+  independent runs)''; the caption also lists the fixed params IP=10000; MW=5000; PLP=40000'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - bindings
+inputs:
+- name: bindings
+  type: array
+  role: result_atoms
+  description: Cell bindings to ResultAtoms
+outputs:
+- name: table
+  type: file
+  role: artifact
+  description: LaTeX table
+- name: table_record
+  type: any
+  role: metadata
+  description: A populated Table record
+defaults:
+  columns:
+  - Condition
+  - Metric (mean)
+  - Metric (std)
+caption_template: Result for robustness analysis at {perturbation} of initial value (mean and standard
+  deviation at {readout} of {n_runs} independent runs).
+purpose_cn: 多次运行的稳健性结果：均值与离散度。

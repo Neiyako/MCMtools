@@ -1,0 +1,52 @@
+template_id: fig.pareto_frontier
+kind: figure
+version: 1.0.0
+purpose: Show the trade-off curve between two conflicting objectives and which designs are non-dominated.
+observed_in: the canonical figure of multi-objective optimisation papers; almost absent from the corpus
+  despite optimisation being a recurring problem class
+evidence:
+- 'corpus: optimisation problems (2021 A, 2023 B, 2024 B) report only a single chosen solution, never
+  the trade-off set'
+- 'corpus: 0/155 Outstanding papers contain a Pareto figure, while 11.6% contain a 3-D surface of a swept
+  objective'
+- '2023 B/2301794: cost-versus-coverage trade-off discussed in prose but shown as a two-column table'
+backend: matplotlib
+figure_type: scatter
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - x
+  - y
+inputs:
+- name: x
+  role: objective_1
+  type: array
+  optional: false
+- name: y
+  role: objective_2
+  type: array
+  optional: false
+- name: frontier_idx
+  role: grouping
+  type: array
+  optional: true
+- name: label
+  role: annotation
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Pareto frontier of {y_label} against {x_label}.
+defaults:
+  format: pdf
+  width_in: 6.0
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 两个冲突目标之间的权衡曲线，自动标出支配关系。

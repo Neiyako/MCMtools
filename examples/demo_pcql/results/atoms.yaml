@@ -1,0 +1,269 @@
+atoms:
+- atom_id: RES-1001
+  run_id: null
+  experiment_id: EXP-001
+  name: beta
+  value: 0.177
+  unit: /day
+  format: '%.2e'
+  condition: fitted
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings:
+    paper: '1.77e-01'
+- atom_id: RES-1002
+  run_id: null
+  experiment_id: EXP-001
+  name: gamma
+  value: 0.0177
+  unit: /day
+  format: '%.2e'
+  condition: fitted
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings:
+    paper: '1.77e-02'
+- atom_id: RES-1003
+  run_id: null
+  experiment_id: EXP-001
+  name: lambda
+  value: 0.00104
+  unit: /day
+  format: '%.2e'
+  condition: fitted
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings:
+    paper: '1.04e-03'
+- atom_id: RES-1004
+  run_id: null
+  experiment_id: EXP-001
+  name: phi
+  value: 0.00114
+  unit: /day
+  format: '%.2e'
+  condition: fitted
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings:
+    paper: '1.14e-03'
+- atom_id: RES-1101
+  run_id: null
+  experiment_id: EXP-002
+  name: report_forecast_mean
+  value: 15000.0
+  unit: reports
+  format: '%.1f'
+  condition: March 1, 2023
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-1102
+  run_id: null
+  experiment_id: EXP-002
+  name: report_forecast_lo
+  value: 11173.04
+  unit: reports
+  format: '%.2f'
+  condition: March 1, 2023, 2.5% quantile
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-1103
+  run_id: null
+  experiment_id: EXP-002
+  name: report_forecast_hi
+  value: 17069.15
+  unit: reports
+  format: '%.2f'
+  condition: March 1, 2023, 97.5% quantile
+  metric_def: null
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-ACTIVE-001
+  run_id: RUN-001-058
+  experiment_id: EXP-001
+  name: peak_active
+  value: 67768.85
+  unit: players
+  format: '%.2f'
+  condition: beta=0.1, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: maximum of the Crowd compartment C(t)
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-DAY-001
+  run_id: RUN-001-058
+  experiment_id: EXP-001
+  name: peak_day
+  value: 101.55
+  unit: days
+  format: '%.2f'
+  condition: beta=0.1, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: time at which C(t) is maximal
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-ACTIVE-001
+  run_id: RUN-001-058
+  experiment_id: EXP-001
+  name: final_active
+  value: 59096.28
+  unit: players
+  format: '%.2f'
+  condition: beta=0.1, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: C(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-LOYAL-001
+  run_id: RUN-001-058
+  experiment_id: EXP-001
+  name: final_loyal
+  value: 3834.75
+  unit: players
+  format: '%.2f'
+  condition: beta=0.1, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: L(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-QUITTED-001
+  run_id: RUN-001-058
+  experiment_id: EXP-001
+  name: final_quitted
+  value: 156924.87
+  unit: players
+  format: '%.2f'
+  condition: beta=0.1, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: Q(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-ACTIVE-002
+  run_id: RUN-001-059
+  experiment_id: EXP-001
+  name: peak_active
+  value: 127813.08
+  unit: players
+  format: '%.2f'
+  condition: beta=0.177, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: maximum of the Crowd compartment C(t)
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-DAY-002
+  run_id: RUN-001-059
+  experiment_id: EXP-001
+  name: peak_day
+  value: 51.55
+  unit: days
+  format: '%.2f'
+  condition: beta=0.177, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: time at which C(t) is maximal
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-ACTIVE-002
+  run_id: RUN-001-059
+  experiment_id: EXP-001
+  name: final_active
+  value: 14871.56
+  unit: players
+  format: '%.2f'
+  condition: beta=0.177, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: C(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-LOYAL-002
+  run_id: RUN-001-059
+  experiment_id: EXP-001
+  name: final_loyal
+  value: 6494.26
+  unit: players
+  format: '%.2f'
+  condition: beta=0.177, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: L(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-QUITTED-002
+  run_id: RUN-001-059
+  experiment_id: EXP-001
+  name: final_quitted
+  value: 273553.72
+  unit: players
+  format: '%.2f'
+  condition: beta=0.177, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: Q(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-ACTIVE-003
+  run_id: RUN-001-060
+  experiment_id: EXP-001
+  name: peak_active
+  value: 160544.33
+  unit: players
+  format: '%.2f'
+  condition: beta=0.25, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: maximum of the Crowd compartment C(t)
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-PEAK-DAY-003
+  run_id: RUN-001-060
+  experiment_id: EXP-001
+  name: peak_day
+  value: 35.75
+  unit: days
+  format: '%.2f'
+  condition: beta=0.25, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: time at which C(t) is maximal
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-ACTIVE-003
+  run_id: RUN-001-060
+  experiment_id: EXP-001
+  name: final_active
+  value: 6999.87
+  unit: players
+  format: '%.2f'
+  condition: beta=0.25, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: C(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-LOYAL-003
+  run_id: RUN-001-060
+  experiment_id: EXP-001
+  name: final_loyal
+  value: 6674.02
+  unit: players
+  format: '%.2f'
+  condition: beta=0.25, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: L(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}
+- atom_id: RES-EXP001-FINAL-QUITTED-003
+  run_id: RUN-001-060
+  experiment_id: EXP-001
+  name: final_quitted
+  value: 285162.89
+  unit: players
+  format: '%.2f'
+  condition: beta=0.25, gamma=0.041(fixed), lambda=1.04e-03(fixed), phi=1.14e-03(fixed)
+  metric_def: Q(t) at the end of the horizon
+  macro_alias: null
+  direction: neutral
+  renderings: {}

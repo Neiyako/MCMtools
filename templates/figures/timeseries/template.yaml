@@ -1,0 +1,54 @@
+template_id: fig.timeseries
+kind: figure
+version: 1.0.0
+purpose: Show how one or more quantities evolve over time, with optional event markers.
+observed_in: the most common figure type in the corpus (41.3% of Outstanding papers)
+evidence:
+- 'corpus: 64/155 Outstanding papers contain a time-evolution figure'
+- '2023 C Fig 1: daily Wordle report volume with the peak marked'
+- '2022 C/2200401 Fig 3: price and holding series over the trading window'
+backend: matplotlib
+figure_type: line
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - t
+  - y
+inputs:
+- name: t
+  role: independent_variable
+  type: array
+  optional: false
+  description: 横轴，通常是日期或时间步（1,2,3,...）
+- name: y
+  role: metric
+  type: array
+  optional: false
+- name: series
+  role: grouping
+  type: array
+  optional: true
+- name: observed
+  role: reference_series
+  type: array
+  optional: true
+- name: events
+  role: event_marker
+  type: array
+  optional: true
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Temporal evolution of {y_label} over {x_label}.
+defaults:
+  format: pdf
+  width_in: 6.6
+latex: \includegraphics[width=0.95\linewidth]{{{file}}}
+purpose_cn: 量随时间演化，可叠加观测序列做对照。出现率最高的一类图。

@@ -1,0 +1,53 @@
+template_id: model.graph_network
+kind: model
+version: 1.0.0
+description: 'Model the problem as a graph: nodes, edges, weights, and a network objective.'
+observed_in: 45.2% of Outstanding papers involve a network or graph formulation; the single largest model
+  family in the corpus
+evidence:
+- 'corpus: 70/155 Outstanding papers contain network/graph content in a section title or figure caption'
+- '2024 B/2400999: subway network with line and transfer edges'
+- '2023 E/2301234: migration flow network between regions'
+- '2019 D/1900001: airport hub network centrality ranking'
+requires:
+  model: false
+  dataset: true
+  required_fields:
+  - nodes
+  - edges
+  - edge_weights
+  - objective_kind
+  - constraints
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  edge_directed_default: true
+  symbol_roles:
+  - node
+  - edge
+  - weight
+  - flow
+  - parameter
+  typical_sections:
+  - Network Construction
+  - Solution of the Model
+  - Centrality and Robustness
+  common_objectives:
+  - shortest_path
+  - min_cost_flow
+  - max_flow
+  - min_spanning_tree
+  - coverage
+  - centrality_ranking
+  checklist:
+  - 每个节点和边的实际含义写清楚了（不要只说'节点'）
+  - 边权从哪来：距离/时间/费用/容量，各自单位
+  - 是否允许重复经过节点或边（有则必须说明）
+  - 网络规模给出（节点数、边数），否则读者无法判断算法可行性
+  - 结论对网络结构变化的稳健性（删掉关键边会怎样）
+purpose_cn: 把问题建成图：节点、边、权重，以及网络上的算法。

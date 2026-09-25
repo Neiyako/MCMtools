@@ -1,0 +1,80 @@
+template_id: paper.spine_physical
+kind: paper
+version: 1.0.0
+description: 'Section order for a mechanism/physics problem: conservation laws, derivation, numerical
+  validation.'
+observed_in: A problems are judged on the derivation and on numerical verification of the scheme
+evidence:
+- 'corpus: A-problem papers carry 4x the numbered equations of other problems'
+- '2024 A/2400996: governing equations -> discretisation -> numerical validation'
+- '2023 A/2322687: model derivation -> parameter identification -> convergence study'
+- 'Precedence constraints preserved: ASSUME->MODEL->SENS->SW, CONC->REF'
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  spine:
+  - order: 10
+    kind: introduction
+    title: Introduction
+    enabled: true
+    tier: mandatory
+  - order: 15
+    kind: restatement
+    title: Restatement of the Problem
+    enabled: true
+    tier: common
+  - order: 20
+    kind: assumptions
+    title: Assumptions and Justifications
+    enabled: true
+    tier: common
+  - order: 25
+    kind: notations
+    title: Notations
+    enabled: true
+    tier: common
+  - order: 50
+    kind: model
+    title: Model Derivation
+    enabled: true
+    tier: common
+  - order: 55
+    kind: solution
+    title: Numerical Scheme and Validation
+    enabled: true
+    tier: common
+  - order: 60
+    kind: sensitivity
+    title: Sensitivity and Convergence Analysis
+    enabled: true
+    tier: common
+  - order: 70
+    kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    enabled: true
+    tier: common
+  - order: 80
+    kind: conclusion
+    title: Conclusion
+    enabled: true
+    tier: common
+  - order: 90
+    kind: references
+    title: References
+    enabled: true
+    tier: mandatory
+  - order: 100
+    kind: appendix
+    title: Appendix
+    enabled: true
+    tier: optional
+  - order: 110
+    kind: report_on_ai
+    title: Report on Use of AI
+    enabled: true
+    tier: mandatory
+  problem_type_note: 机理类题目：推导要完整到读者能复现，数值格式必须做收敛性验证。只给结果不给验证是这类题最常见的失分点。
+purpose_cn: 机理/物理题的章节顺序：守恒律、模型推导、数值格式与验证。

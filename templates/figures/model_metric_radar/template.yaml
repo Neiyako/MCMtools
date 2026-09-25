@@ -1,0 +1,54 @@
+template_id: fig.model_metric_radar
+kind: figure
+version: 1.0.0
+purpose: Compare several candidate models across several metrics on one radar, after per-metric normalisation.
+observed_in: the standard model-selection figure in evaluation sub-problems; the corpus compares models with a metric table
+evidence:
+- '2023 B/2305312: four candidate strategies scored on five criteria, shown as a 4x5 number table'
+- '2024 C/2400996: classifiers compared by accuracy, precision and recall across three columns'
+- 'corpus: multi-model metric tables are common, while radar comparison of models is absent'
+backend: matplotlib
+figure_type: radar
+requires:
+  model: false
+  dataset: false
+  required_inputs:
+  - metrics
+  - models
+  - scores
+inputs:
+- name: metrics
+  role: labels
+  type: array
+  optional: false
+  description: 指标名列表，至少 3 个，否则画不成雷达形状
+- name: models
+  role: labels
+  type: array
+  optional: false
+  description: 模型名列表，个数等于 scores 的行数
+- name: scores
+  role: matrix
+  type: matrix
+  optional: false
+  description: 每个模型一行，行内是它在各指标上的原始值（长度等于 metrics）
+- name: lower_is_better
+  role: grouping
+  type: array
+  optional: true
+  description: 与 metrics 等长的真/假标记，为真的指标越小越好（如 RMSE）
+outputs:
+- name: figure
+  type: file
+  role: artifact
+  description: Vector PDF bound to ResultAtoms
+- name: figure_record
+  type: any
+  role: metadata
+  description: A populated Figure record
+caption_template: Normalised metric comparison of {n_models} models over {n_metrics} metrics.
+defaults:
+  format: pdf
+  width_in: 6.2
+latex: \includegraphics[width=0.8\linewidth]{{{file}}}
+purpose_cn: 多模型多指标的归一化雷达对比，一眼看出谁在哪维更强。

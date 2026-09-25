@@ -1,0 +1,48 @@
+template_id: model.game_theory
+kind: model
+version: 1.0.0
+description: 'Strategic interaction: players, strategies, payoffs, and equilibrium concept.'
+observed_in: appears in negotiation/strategy problems; equilibrium analysis is a common 'extension' section
+evidence:
+- 'corpus: game/equilibrium words appear in a small but consistent set of B/D problems'
+- '2020 D/2000003: two-player pricing game with Nash equilibrium'
+- '2018 B/1800009: evolutionary game between firms and regulators'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - players
+  - strategies
+  - payoffs
+  - equilibrium_concept
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: optimization
+  symbol_roles:
+  - player
+  - strategy
+  - payoff
+  - probability
+  - parameter
+  typical_sections:
+  - Game Formulation
+  - Equilibrium Analysis
+  - Comparative Statics
+  common_equilibria:
+  - nash_pure
+  - nash_mixed
+  - stackelberg
+  - evolutionary_stable
+  - cooperative_shapley
+  checklist:
+  - 支付矩阵或支付函数完整给出，不要只描述
+  - 说明是否完全信息、是否同时行动
+  - 均衡的存在性要论证（不是算了就算有）
+  - 混合策略要给出概率含义，不要只给数
+  - 均衡解的稳定性/唯一性讨论，多均衡时必须说明选哪个及理由
+purpose_cn: 博弈：参与者、策略、收益与均衡。

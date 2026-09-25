@@ -1,0 +1,39 @@
+template_id: exp.robustness_noise
+kind: experiment
+version: 1.0.0
+description: Sensitivity with a stochastic perturbation kernel applied to inputs or initial values.
+observed_in: 5% of papers use the heading 'Robustness'; 10% inject noise or perturb inputs
+evidence:
+- '2022 C/2200401: ''The noise added here follows a Gaussian distribution. We preset the variance of noise
+  to be 0.01 and 0.02 times the original value.'''
+- '2017 F/64486 Table 8: ''1% random noise of initial value (mean and standard deviation at year 50 of
+  30 independent runs)'''
+- '2022 F/2220722: ''we add and subtract 5% of Finland''s GDP per capita respectively'''
+- '2020 A/2001334: noise into initial conditions, judged by RMSE between runs and a Q-Q plot'
+requires:
+  model: true
+  dataset: false
+  required_inputs:
+  - perturbation
+  - held_fixed
+  - n_runs
+defaults:
+  n_runs: 30
+  aggregation: mean_and_std
+  dispersion_kind: std
+caption_template: Results under {perturbation_label} noise ({n_runs} independent runs).
+inputs:
+- name: varied
+  type: array
+  role: independent_variable
+  description: Axes that change
+- name: held_fixed
+  type: array
+  role: invariant
+  description: What must NOT change
+outputs:
+- name: result_atoms
+  type: array
+  role: output
+  description: Typed numbers
+purpose_cn: 在输入上加随机扰动，看结论稳不稳。

@@ -1,0 +1,48 @@
+id: FIG-001
+template_id: fig.sensitivity_line
+experiment_id: EXP-001
+model_id: null
+bindings:
+- atom_id: RES-EXP001-PEAK-ACTIVE-001
+  role: y
+  format: null
+  source: atom
+  artifact_path: null
+  column: null
+  run_id: null
+  value: null
+- atom_id: RES-EXP001-PEAK-ACTIVE-002
+  role: y
+  format: null
+  source: atom
+  artifact_path: null
+  column: null
+  run_id: null
+  value: null
+- atom_id: RES-EXP001-PEAK-ACTIVE-003
+  role: y
+  format: null
+  source: atom
+  artifact_path: null
+  column: null
+  run_id: null
+  value: null
+- atom_id: RES-1001
+  role: x
+  format: null
+  source: atom
+  artifact_path: null
+  column: null
+  run_id: null
+  value: null
+file: figures/FIG-001.pdf
+format: pdf
+width_in: 6.0
+dpi: null
+caption: Sensitivity of peak participation to the participation factor.
+caption_source: human
+label: fig:beta_sens
+referenced_in:
+- SEC-050
+status: generated
+generated_at: '2026-09-25T14:37:39Z'

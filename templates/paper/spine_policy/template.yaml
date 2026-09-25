@@ -1,0 +1,84 @@
+template_id: paper.spine_policy
+kind: paper
+version: 1.0.0
+description: 'Section order for a policy/operations problem: options, evaluation criteria, recommendation.'
+observed_in: B and D problems are judged on whether the recommendation is defensible and tested
+evidence:
+- 'corpus: B/D papers pair a model section with an explicit scenario or policy section'
+- '2022 B/2202748: model -> allocation scheme -> scenario comparison'
+- '2024 B/2400999: formulation -> solution -> policy recommendation with robustness'
+- 'Precedence constraints preserved: MODEL->SENS->SW, CONC->REF'
+inputs: []
+outputs:
+- name: sections
+  type: array
+  role: structure
+defaults:
+  spine:
+  - order: 10
+    kind: introduction
+    title: Introduction
+    enabled: true
+    tier: mandatory
+  - order: 15
+    kind: restatement
+    title: Restatement of the Problem
+    enabled: true
+    tier: common
+  - order: 30
+    kind: assumptions
+    title: Assumptions and Justifications
+    enabled: true
+    tier: common
+  - order: 40
+    kind: notations
+    title: Notations
+    enabled: true
+    tier: common
+  - order: 50
+    kind: model
+    title: Model Formulation
+    enabled: true
+    tier: common
+  - order: 55
+    kind: solution
+    title: Solution and Scheme Design
+    enabled: true
+    tier: common
+  - order: 58
+    kind: scenario
+    title: Scenario Comparison
+    enabled: true
+    tier: optional
+  - order: 60
+    kind: sensitivity
+    title: Sensitivity and Robustness
+    enabled: true
+    tier: common
+  - order: 70
+    kind: strengths_weaknesses
+    title: Strengths and Weaknesses
+    enabled: true
+    tier: common
+  - order: 80
+    kind: conclusion
+    title: Conclusion
+    enabled: true
+    tier: common
+  - order: 90
+    kind: references
+    title: References
+    enabled: true
+    tier: mandatory
+  - order: 100
+    kind: appendix
+    title: Appendix
+    enabled: true
+    tier: optional
+  - order: 110
+    kind: report_on_ai
+    title: Report on Use of AI
+    enabled: true
+    tier: mandatory
+  problem_type_note: 政策/运筹类题目：方案要能被检验。给出方案后必须做情景对比和稳健性分析，并明确写出结论成立的边界条件。
+purpose_cn: 政策/运筹题的章节顺序：方案设计、评估、情景对比。

@@ -1,0 +1,32 @@
+template_id: model.prediction_regression
+kind: model
+version: 1.0.0
+description: Regression / gradient-boosted prediction with feature attribution.
+observed_in: common in C/D
+evidence:
+- '2023 C/2310767: Lasso / Ridge / XGBoost / LightGBM / Stacking under one CV protocol'
+- '2020 D/2003723: logistic regression with VIF, significance testing and heterogeneity checks'
+- '2023 C/2301192: random forest with grid-searched nestimators/maxfeatures/maxsamples/maxdepth'
+requires:
+  model: false
+  dataset: false
+  required_fields:
+  - features
+  - target
+  - metrics
+inputs: []
+outputs:
+- name: model
+  type: any
+  role: artifact
+  description: A populated Model record
+defaults:
+  model_kind: prediction
+  symbol_roles:
+  - parameter
+  - output_metric
+  typical_sections:
+  - Feature Analysis
+  - Model Construction
+  - Evaluation
+purpose_cn: 回归或梯度提升预测，并给出特征重要性。
