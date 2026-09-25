@@ -204,3 +204,114 @@ class TestTemplatesAreChinese:
                 if not any("\u4e00" <= c <= "\u9fff" for c in line):
                     missing.append(t.template_id)
         assert not missing, f"这些模板没有中文用途：{missing}"
+
+
+# -- 选题流程 --------------------------------------------------------------
+# 这是一次真实的用户端阻断：选题页只显示"有没有锁定"，既列不出题目、
+# 也没法新建或锁定。用户第一步就卡死，而后端其实一直有
+# POST /api/project/lock —— 缺的纯粹是界面。
+# 后端这几条测试保证"能选题"这件事不会再退化。
+
+
+class TestProblemFlow:
+    def _client(self, tmp_path):
+        from fastapi.testclient import TestClient
+
+        from mcmcore.api import create_app
+        from mcmcore.store import Store
+
+        root = tmp_path / "proj"
+        Store.init(root, "problem-flow")
+        return TestClient(create_app(root))
+
+    def test_starts_empty_and_unlocked(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        assert c.get("/api/problems").json() == []
+        assert c.get("/api/state").json()["phase"] == "problem_selection"
+
+    def test_can_register_a_problem(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        r = c.post("/api/problems", json={"letter": "C", "title": "Wordle"})
+        assert r.status_code == 200, r.text
+        assert r.json()["problem"]["id"] == "PROB-C"
+        assert len(c.get("/api/problems").json()) == 1
+
+    def test_can_lock_registered_problem(self, tmp_path) -> None:
+        """这条是用户卡住的那一步。"""
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "C", "title": "Wordle"})
+        r = c.post("/api/project/lock",
+                   json={"problem_id": "PROB-C", "team_number": "2400996"})
+        assert r.status_code == 200, r.text
+        assert r.json()["project"]["locked_problem_id"] == "PROB-C"
+        assert r.json()["project"]["phase"] == "build"
+
+    def test_lock_updates_state(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "C"})
+        c.post("/api/project/lock", json={"problem_id": "PROB-C"})
+        st = c.get("/api/state").json()
+        assert st["phase"] == "build"
+        assert st["problem"]["id"] == "PROB-C"
+        assert st["problem"]["locked"] is True
+
+    def test_lock_without_team_number(self, tmp_path) -> None:
+        """队伍号是可选的，不填也能锁。"""
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "A"})
+        r = c.post("/api/project/lock", json={"problem_id": "PROB-A"})
+        assert r.status_code == 200
+
+    def test_duplicate_problem_rejected(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "C"})
+        r = c.post("/api/problems", json={"letter": "C"})
+        assert r.status_code == 409
+        assert "已存在" in r.json()["detail"]
+
+    def test_empty_problem_rejected(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        r = c.post("/api/problems", json={})
+        assert r.status_code == 422
+        assert "题号" in r.json()["detail"]
+
+    def test_update_problem(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "C"})
+        r = c.put("/api/problems/PROB-C", json={"title": "改过的标题"})
+        assert r.status_code == 200
+        assert r.json()["problem"]["title"] == "改过的标题"
+
+    def test_delete_unlocked_problem(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "A"})
+        assert c.delete("/api/problems/PROB-A").status_code == 200
+        assert c.get("/api/problems").json() == []
+
+    def test_cannot_delete_locked_problem(self, tmp_path) -> None:
+        """删掉已锁定的题会让项目指向不存在的题。"""
+        c = self._client(tmp_path)
+        c.post("/api/problems", json={"letter": "C"})
+        c.post("/api/project/lock", json={"problem_id": "PROB-C"})
+        r = c.delete("/api/problems/PROB-C")
+        assert r.status_code == 409
+        assert "不能删除" in r.json()["detail"]
+
+    def test_delete_missing_problem_404(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        assert c.delete("/api/problems/PROB-Z").status_code == 404
+
+    def test_edit_unknown_problem_404(self, tmp_path) -> None:
+        c = self._client(tmp_path)
+        assert c.put("/api/problems/PROB-Z", json={"title": "x"}).status_code == 404
+
+    def test_register_then_reject_then_lock_another(self, tmp_path) -> None:
+        """比赛实际用法：六道都登记，边读边排除，最后锁一道。"""
+        c = self._client(tmp_path)
+        for letter in ("A", "B", "C"):
+            c.post("/api/problems", json={"letter": letter, "title": f"题 {letter}"})
+        c.put("/api/problems/PROB-A", json={"status": "rejected"})
+        c.put("/api/problems/PROB-B", json={"status": "rejected"})
+        r = c.post("/api/project/lock", json={"problem_id": "PROB-C"})
+        assert r.status_code == 200
+        assert len(c.get("/api/problems").json()) == 3

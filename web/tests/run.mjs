@@ -68,7 +68,7 @@ try {
   }
   log(`server ready at ${BASE}\n`);
 
-  for (const file of ['logic.test.mjs', 'badges.test.mjs', 'render.test.mjs', 'flows.test.mjs', 'figsearch.test.mjs', 'diy.test.mjs']) {
+  for (const file of ['logic.test.mjs', 'badges.test.mjs', 'render.test.mjs', 'flows.test.mjs', 'figsearch.test.mjs', 'diy.test.mjs', 'problems.test.mjs']) {
     log(`\n${'='.repeat(60)}\n${file}\n${'='.repeat(60)}`);
     const rc = await run(file);
     if (rc !== 0) code = rc;

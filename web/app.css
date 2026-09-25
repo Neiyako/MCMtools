@@ -479,3 +479,11 @@ ol.tight li, ul.tight li { margin-bottom: 4px; line-height: 1.55; font-size: 13p
   background: #f0f9f0; border: 1px solid #b7dfb7; border-radius: 6px;
   padding: 9px 12px; color: #245c24; margin-top: 10px;
 }
+
+/* 选题页：已锁定那行要一眼看出来 */
+tr.row-locked { background: #f4faf4; }
+tr.row-locked td { font-weight: 500; }
+.tag-good {
+  background: #e8f6e8; color: #246124;
+  border: 1px solid #b7dfb7;
+}

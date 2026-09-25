@@ -313,7 +313,7 @@ Binding(atom_id="LIT-nodes", role="nodes", source="literal",
 
 | 缺口 | 影响 | 绕过办法 |
 |---|---|---|
-| 没有 `mcm data add` | 数据集只能读不能写 | 写脚本调 `store.save_dataset` |
+| ~~没有 `mcm data add`~~ | 已解决 | 面板「数据」页可直接导入 CSV/TSV，读列名、类型、缺失值 |
 | 没有 `mcm exp add` | 实验协议要手写 YAML | 照 `experiments/EXP-*/experiment.yaml` 抄 |
 | 中文字符串不能进 pdflatex | 符号表释义写中文会编译失败 | 释义写英文；或改用 xelatex |
 | drawio 命令行非必需但推荐 | 没有它时流程图退化成示意图 | 装 drawio desktop，或用 .drawio 自己导出 |

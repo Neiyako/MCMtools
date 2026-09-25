@@ -1653,9 +1653,12 @@ mcm problems analyze A              # AI-assisted, pre-lock only
 mcm problems lock A --team 2400996  # explicit, confirmed
 
 # --- data ---
-mcm data add ./Problem_C_Data.zip --name "wordle" --stage raw
-mcm data clean DS-001 --recipe recipes/wordle.yaml
-mcm data eda DS-001                 # emits EDA figures + a stats table
+# 注意：这一段是当初的设计草案，`mcm data add` 从未实现。
+# 实际入口是面板的「数据」页（POST /api/datasets/import），
+# 或在脚本里调 store.save_dataset()。
+mcm data add ./Problem_C_Data.zip --name "wordle" --stage raw   # 未实现
+mcm data clean DS-001 --recipe recipes/wordle.yaml              # 未实现
+mcm data eda DS-001                 # 未实现
 
 # --- models ---
 mcm model new M03 --from-template ode_system

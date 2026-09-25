@@ -11,3 +11,6 @@ runs/
 
 # macOS .app 是 build-app.sh 的产物，且带本机代码签名，不入库
 MCMtools.app/
+
+# 实验运行产物：跑一次就变，不该入库
+examples/*/code/output/

@@ -177,6 +177,226 @@ def create_app(project_root: Path) -> FastAPI:
         cfg = store().layout.load_config()
         return cfg.model_dump(by_alias=True)
 
+    # -- 数据集 -----------------------------------------------------------
+    @app.post("/api/datasets/import")
+    def import_dataset(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """登记一份数据文件。
+
+        面板此前让用户去命令行加数据，而那条命令根本不存在，也没有
+        任何别的入口。照着提示做只会得到 "invalid choice"。这里把真正的
+        入口补上：读文件本身，把行数、列、类型都查出来，而不是让用户手抄。
+        """
+        import csv
+        import hashlib
+
+        from .schemas import Column, Dataset, DatasetFile, DatasetSource
+
+        st = store()
+        raw = str(payload.get("path") or "").strip()
+        if not raw:
+            raise HTTPException(422, "要指定数据文件路径。")
+        src = Path(raw).expanduser()
+        if not src.is_absolute():
+            # 相对路径按项目根解析，和别的命令保持一致
+            src = (st.layout.root / src).resolve()
+        if not src.is_file():
+            raise HTTPException(404, f"找不到文件：{src}")
+        if src.suffix.lower() not in (".csv", ".tsv", ".txt"):
+            # 别的格式不做支持，报清楚而不是存一个读不了的记录
+            raise HTTPException(
+                422, f"目前只支持 CSV/TSV，收到 {src.suffix or '无扩展名'}。")
+
+        delim = "\t" if src.suffix.lower() == ".tsv" else ","
+        try:
+            with src.open("r", encoding="utf-8-sig", newline="") as fh:
+                rows = list(csv.reader(fh, delimiter=delim))
+        except UnicodeDecodeError:
+            raise HTTPException(
+                422, f"{src.name} 不是 UTF-8 文本。请先转成 UTF-8 再导入。")
+        if not rows:
+            raise HTTPException(422, f"{src.name} 是空文件。")
+
+        header = [str(h).strip() for h in rows[0]]
+        body = rows[1:]
+        if not header or not any(header):
+            raise HTTPException(422, f"{src.name} 第一行不是表头。")
+
+        def _isnum(v: str) -> bool:
+            try:
+                float(v)
+                return True
+            except (TypeError, ValueError):
+                return False
+
+        cols: List[Column] = []
+        for i, name in enumerate(header):
+            vals = [r[i] for r in body if i < len(r) and r[i] != ""]
+            dtype = "number" if vals and all(_isnum(v) for v in vals) else "text"
+            missing = sum(1 for r in body if i >= len(r) or r[i] == "")
+            cols.append(Column(name=name or f"col{i + 1}", dtype=dtype,
+                               missing_count=missing))
+
+        did = (payload.get("dataset_id") or
+               f"DS-{src.stem.upper().replace(' ', '_')[:24]}")
+        if any(d.dataset_id == did for d in st.list_datasets()):
+            raise HTTPException(409, f"数据集 {did} 已存在。换个编号。")
+
+        digest = hashlib.sha256(src.read_bytes()).hexdigest()[:16]
+        # 来源要如实标：比赛方给的数据和网上找的数据，可信度不一样，
+        # 论文里也要分别说明。默认按"比赛方提供"处理，可改。
+        kind = payload.get("kind") or "competition_provided"
+        if kind not in ("competition_provided", "external", "derived", "simulated"):
+            raise HTTPException(
+                422, f"来源类型只能是 competition_provided / external / derived / "
+                     f"simulated，收到 {kind!r}。")
+        ds = Dataset(
+            dataset_id=did,
+            name=payload.get("name") or src.name,
+            stage=payload.get("stage") or "raw",
+            source=DatasetSource(kind=kind, ref=str(src)),
+            content_hash=digest,
+            files=[DatasetFile(path=str(src), rows=len(body),
+                               bytes=src.stat().st_size, content_hash=digest)],
+            schema_=cols,
+        )
+        st.save_dataset(ds)
+        return {"dataset": ds.model_dump(by_alias=True),
+                "rows": len(body), "columns": [c.model_dump() for c in cols]}
+
+    @app.delete("/api/datasets/{dataset_id}")
+    def delete_dataset(dataset_id: str) -> Dict[str, Any]:
+        st = store()
+        try:
+            path = st.layout.dataset_path(dataset_id)
+        except AttributeError:
+            path = st.layout.root / "datasets" / f"{dataset_id}.yaml"
+        if not path.is_file():
+            raise HTTPException(404, f"没有这个数据集：{dataset_id}")
+        path.unlink()
+        return {"removed": dataset_id}
+
+    # -- 选题 -------------------------------------------------------------
+    @app.get("/api/problems")
+    def list_problems() -> List[Dict[str, Any]]:
+        """候选题目清单。
+
+        选题是流程的第一步，但面板此前只有"看一眼有没有锁定"，
+        既列不出题目、也没法新建或锁定 —— 用户第一步就卡死。
+        这里把缺的读接口补上。
+        """
+        st = store()
+        return [p.model_dump(by_alias=True) for p in st.list_problems()]
+
+    @app.post("/api/problems")
+    def create_problem(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """新增一道候选题目。
+
+        比赛时最常见的情形是"先把 A-F 六道都登记进来，边读边排除"，
+        所以允许只填最少信息就建，不必一开始写全。
+        """
+        from .schemas import Problem
+
+        st = store()
+        letter = (payload.get("letter") or "").strip().upper()
+        title = (payload.get("title") or "").strip()
+        if not letter and not title:
+            raise HTTPException(422, "至少要有题号（A-F）或标题，否则之后认不出是哪道题。")
+        # id 用题号，天然唯一、也方便对照官方题面。已存在就报错，
+        # 而不是静默覆盖 —— 覆盖会丢掉已登记的附件路径。
+        pid = (payload.get("id") or f"PROB-{letter or 'X'}").strip()
+        if any(p.id == pid for p in st.list_problems()):
+            raise HTTPException(409, f"题目 {pid} 已存在。换个题号，或直接编辑那一条。")
+
+        try:
+            prob = Problem(
+                id=pid, letter=letter or None, title=title or None,
+                year=payload.get("year"),
+                statement_path=payload.get("statement_path") or None,
+                summary=payload.get("summary") or None,
+                status=(payload.get("status") or "candidate"),
+            )
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(422, f"这道题填得不对：{exc}")
+        st.save_problem(prob)
+        return {"problem": prob.model_dump(by_alias=True),
+                "problems": [p.model_dump(by_alias=True)
+                             for p in st.list_problems()]}
+
+    @app.put("/api/problems/{problem_id}")
+    def update_problem(problem_id: str,
+                       payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        from .schemas import Problem
+
+        st = store()
+        existing = {p.id: p for p in st.list_problems()}
+        if problem_id not in existing:
+            raise HTTPException(404, f"没有这道题：{problem_id}")
+        base = existing[problem_id].model_dump()
+        merged = {**base, **payload, "id": problem_id}
+        allowed = set(Problem.model_fields.keys())
+        try:
+            prob = Problem(**{k: v for k, v in merged.items() if k in allowed})
+        except Exception as exc:  # noqa: BLE001
+            raise HTTPException(422, f"这道题填得不对：{exc}")
+        st.save_problem(prob)
+        return {"problem": prob.model_dump(by_alias=True)}
+
+    @app.delete("/api/problems/{problem_id}")
+    def delete_problem(problem_id: str) -> Dict[str, Any]:
+        st = store()
+        path = st.layout.problem_path(problem_id)
+        if not path.is_file():
+            raise HTTPException(404, f"没有这道题：{problem_id}")
+        cfg = st.layout.load_config()
+        if cfg.locked_problem_id == problem_id:
+            # 删掉已锁定的题目会让项目指向一个不存在的题，
+            # 后续审计和正文引用都会莫名其妙地失败。
+            raise HTTPException(
+                409, f"{problem_id} 已锁定，不能删除。先改锁到别的题，或直接换项目。")
+        path.unlink()
+        return {"removed": problem_id}
+
+    @app.post("/api/project/unlock")
+    def unlock_problem() -> Dict[str, Any]:
+        """解锁：退回选题阶段。
+
+        锁定会把侧栏收窄到构建流程，如果锁错了题、或者想重新比较几道题，
+        没有退路就会很难受 —— 用户只能去手工改 project.yaml。
+        已经产出的结果不删：换题之后它们会显示为过期，
+        由用户决定是重跑还是放弃。
+        """
+        from .schemas import ProjectPhase
+
+        st = store()
+        cfg = st.layout.load_config()
+        was = cfg.locked_problem_id
+        if not was:
+            raise HTTPException(409, "当前没有锁定任何题目，不需要解锁。")
+        cfg.locked_problem_id = None
+        cfg.phase = ProjectPhase.PROBLEM_SELECTION
+        st.layout.save_config(cfg)
+        return {"unlocked": was,
+                "project": cfg.model_dump(by_alias=True),
+                "findings": findings_payload(st)}
+
+    @app.put("/api/project")
+    def update_project(payload: Dict[str, Any] = Body(...)) -> Dict[str, Any]:
+        """改项目级设置。
+
+        目前只有队伍控制号需要在这里改：它印在摘要页上，比赛期间
+        可能后补或改动，没有入口的话用户就得去手工编辑 project.yaml。
+        """
+        st = store()
+        cfg = st.layout.load_config()
+        if "team_control_number" in payload:
+            v = payload.get("team_control_number")
+            cfg.team_control_number = (str(v).strip() or None) if v else None
+        if "name" in payload:
+            v = payload.get("name")
+            cfg.name = (str(v).strip() or None) if v else None
+        st.layout.save_config(cfg)
+        return {"project": cfg.model_dump(by_alias=True)}
+
     @app.post("/api/project/lock")
     def lock_problem(req: LockRequest) -> Dict[str, Any]:
         st = store()

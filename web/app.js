@@ -256,16 +256,115 @@ function statCard(label, value, note = '', warn = false) {
 // -- 数据 -------------------------------------------------------------------
 async function screenData(root) {
   setHeader(T.data.title, T.data.sub);
+  await paintData(root);
+}
+
+/** 数据集页。
+ *
+ * 空状态以前让用户去命令行导入数据，而那条命令根本不存在，
+ * 也没有任何别的入口。照着提示做只会得到 "invalid choice"。
+ * 现在这一页自己就能导入。
+ */
+async function paintData(root) {
   const rows = await api('/api/datasets');
-  if (!rows.length) {
-    root.innerHTML = `<div class="empty">
+
+  const body = rows.length ? `<table class="data">
+    <thead><tr>
+      <th>${T.data.colId}</th><th>${T.data.colName}</th>
+      <th>${T.data.colStage}</th><th>${T.data.colRows}</th>
+      <th>${T.data.colCols}</th><th>${T.data.colSource}</th><th></th>
+    </tr></thead>
+    <tbody>${rows.map(d => {
+      const cols = (d.schema || d.columns || []);
+      return `<tr>
+        <td class="mono">${esc(d.dataset_id || d.id)}</td>
+        <td>${esc(d.name || '—')}</td>
+        <td><span class="tag">${esc(stageLabel(d.stage))}</span></td>
+        <td>${(d.files || [])[0] && (d.files || [])[0].rows != null
+              ? (d.files || [])[0].rows : '—'}</td>
+        <td>${cols.length || '—'}</td>
+        <td class="small muted">${esc(datasetSourceLabel(d.source))}</td>
+        <td class="row-actions">
+          <button class="btn btn-mini btn-danger" data-del-ds="${
+            esc(d.dataset_id || d.id)}">${T.math.remove}</button>
+        </td>
+      </tr>`;
+    }).join('')}</tbody></table>` : `<div class="empty">
       <p>${T.data.empty}</p>
-      <p class="muted">${T.data.emptyHint} <code>./core/mcm data add &lt;文件&gt;</code></p></div>`;
-    return;
-  }
-  root.innerHTML = tableCard(['编号', '名称', '行数', '列数'], rows.map(d => [
-    d.dataset_id || d.id, d.name, d.n_rows ?? '—', (d.columns || []).length,
-  ]));
+      <p class="muted small">${T.data.emptyHint}</p></div>`;
+
+  root.innerHTML = `
+    <div class="card">
+      <h2>${T.data.card} <span class="muted">（${rows.length}）</span></h2>
+      ${body}
+    </div>
+
+    <div class="card">
+      <h2>${T.data.importTitle}</h2>
+      <div class="muted small">${T.data.importHint}</div>
+      <div id="ds-form">${fieldEditor(DATASET_FIELDS, {})}</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="ds-import">${T.data.importBtn}</button>
+      </div>
+      <div id="ds-msg" class="small" hidden></div>
+    </div>`;
+
+  const msg = (text, ok) => {
+    const el = root.querySelector('#ds-msg');
+    el.hidden = false;
+    el.className = ok ? 'success-box small' : 'error-box small';
+    el.textContent = text;
+  };
+
+  root.querySelector('#ds-import').onclick = async () => {
+    root.querySelector('#ds-msg').hidden = true;
+    const v = readFields(DATASET_FIELDS);
+    if (!String(v.path || '').trim()) { msg(T.data.needPath, false); return; }
+    try {
+      const r = await api('/api/datasets/import', {
+        method: 'POST', body: JSON.stringify(v),
+      });
+      msg(T.data.imported(r.rows, (r.columns || []).length), true);
+      await paintData(root);
+    } catch (e) {
+      msg(`${T.data.importFailed}${e.message || e}`, false);
+    }
+  };
+
+  root.querySelectorAll('[data-del-ds]').forEach(b => {
+    b.onclick = () => confirmDelete(T.math.remove, async () => {
+      try {
+        await api(`/api/datasets/${encodeURIComponent(
+          b.getAttribute('data-del-ds'))}`, { method: 'DELETE' });
+        await paintData(root);
+      } catch (e) {
+        msg(`${T.data.delFailed}${e.message || e}`, false);
+      }
+    });
+  });
+}
+
+const DATASET_FIELDS = [
+  { key: 'path', label: T.data.fPath, required: true,
+    placeholder: '/path/to/data.csv', hint: T.data.fPathHint },
+  { key: 'name', label: T.data.fName, placeholder: T.data.fNamePh },
+  { key: 'kind', label: T.data.fKind, type: 'select', options: [
+    { value: 'competition_provided', label: T.data.kComp },
+    { value: 'external', label: T.data.kExt },
+    { value: 'derived', label: T.data.kDer },
+    { value: 'simulated', label: T.data.kSim },
+  ], hint: T.data.fKindHint },
+];
+
+function stageLabel(s) {
+  return ({ raw: T.data.stRaw, staged: T.data.stStaged, cleaned: T.data.stCleaned,
+            processed: T.data.stProcessed, features: T.data.stFeatures })[s] || s || '—';
+}
+
+function datasetSourceLabel(src) {
+  if (!src) return '—';
+  return ({ competition_provided: T.data.kComp, external: T.data.kExt,
+            derived: T.data.kDer, simulated: T.data.kSim })[src.kind] || src.kind;
 }
 
 // -- 数学内容 ---------------------------------------------------------------
@@ -1628,22 +1727,225 @@ async function screenAudit(root) {
 }
 
 // -- 选题 -------------------------------------------------------------------
+/** 选题页：登记候选题目，然后锁定一道。
+ *
+ * 这一页以前是个死胡同 —— 只显示"有没有锁定"，既列不出题目、
+ * 也没法新建或锁定。用户第一步就卡住，而后端其实早就有
+ * POST /api/project/lock。缺的纯粹是界面。
+ */
 async function screenProblems(root) {
   setHeader(T.problems.title, T.problems.sub);
+  await paintProblems(root);
+}
+
+async function paintProblems(root) {
+  const d = await api('/api/problems');
+  const list = Array.isArray(d) ? d : (d.problems || []);
   const locked = (STATE.problem || {}).id;
-  root.innerHTML = `<div class="card">
-    <h2>${T.problems.card}</h2>
-    <p class="muted">${T.problems.hint}</p>
-    <div class="row"><span class="grow">${T.problems.locked}</span>
-      <b>${esc(locked || T.problems.noneLocked)}</b></div>
-  </div>`;
+
+  const rows = list.map(p => {
+    const isLocked = p.id === locked;
+    return `<tr class="${isLocked ? 'row-locked' : ''}">
+      <td><b>${esc(p.letter || '—')}</b></td>
+      <td>${esc(p.title || '—')}</td>
+      <td>${esc(p.summary || '—')}</td>
+      <td>${isLocked
+        ? `<span class="tag tag-good">${T.problems.lockedTag}</span>`
+        : `<span class="muted">${statusLabel(p.status)}</span>`}</td>
+      <td class="row-actions">
+        ${isLocked ? '' :
+          `<button class="btn btn-mini btn-primary" data-lock="${esc(p.id)}">${
+            T.problems.lockBtn}</button>`}
+        <button class="btn btn-mini" data-edit-prob="${esc(p.id)}">${
+          T.math.edit}</button>
+        ${isLocked ? '' :
+          `<button class="btn btn-mini btn-danger" data-del-prob="${esc(p.id)}">${
+            T.math.remove}</button>`}
+      </td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `
+    <div class="card">
+      <h2>${T.problems.card}</h2>
+      <p class="muted">${T.problems.hint}</p>
+      <div class="row"><span class="grow">${T.problems.locked}</span>
+        <b>${esc(locked || T.problems.noneLocked)}</b></div>
+      ${locked ? `<div class="ok-box small">${T.problems.lockedHint}</div>` : ''}
+    </div>
+
+    <div class="card">
+      <h2>${T.problems.listTitle}
+        <span class="muted">（${list.length}）</span></h2>
+      ${list.length ? `<table class="data">
+        <thead><tr>
+          <th>${T.problems.colLetter}</th><th>${T.problems.colTitle}</th>
+          <th>${T.problems.colNote}</th><th>${T.problems.colStatus}</th>
+          <th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>` : `<div class="empty">${T.problems.empty}</div>`}
+    </div>
+
+    <div class="card">
+      <h2>${T.problems.addTitle}</h2>
+      <div class="muted small">${T.problems.addHint}</div>
+      <div id="prob-form">${fieldEditor(PROBLEM_FIELDS, {})}</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="prob-add">${T.problems.addBtn}</button>
+      </div>
+      <div id="prob-msg" class="small" hidden></div>
+    </div>
+  `;
+
+  const repaint = async () => {
+    // 锁定会改 phase，必须整体刷新，否则侧栏还停在旧阶段
+    await refresh();
+    await paintProblems(root);
+  };
+  const msg = (text, kind) => {
+    const el = root.querySelector('#prob-msg');
+    el.hidden = false;
+    el.className = kind === 'error' ? 'error-box small' : 'success-box small';
+    el.textContent = text;
+  };
+
+  root.querySelector('#prob-add').onclick = async () => {
+    const err = root.querySelector('#prob-msg');
+    err.hidden = true;
+    let v;
+    try { v = readFields(PROBLEM_FIELDS); }
+    catch (e) { msg(e.message, 'error'); return; }
+    if (!String(v.letter || '').trim() && !String(v.title || '').trim()) {
+      msg(T.problems.needOne, 'error');
+      return;
+    }
+    try {
+      await api('/api/problems', {
+        method: 'POST', body: JSON.stringify(v),
+      });
+      msg(T.problems.added);
+      await repaint();
+    } catch (e) {
+      msg(`${T.problems.addFailed}${e.message || e}`, 'error');
+    }
+  };
+
+  root.querySelectorAll('[data-lock]').forEach(b => {
+    b.onclick = () => lockProblemModal(b.getAttribute('data-lock'), repaint);
+  });
+  root.querySelectorAll('[data-edit-prob]').forEach(b => {
+    b.onclick = () => {
+      const rec = list.find(x => x.id === b.getAttribute('data-edit-prob')) || {};
+      editProblemModal(rec, repaint);
+    };
+  });
+  root.querySelectorAll('[data-del-prob]').forEach(b => {
+    b.onclick = () => confirmDelete(T.math.remove, async () => {
+      try {
+        await api(`/api/problems/${encodeURIComponent(
+          b.getAttribute('data-del-prob'))}`, { method: 'DELETE' });
+        await repaint();
+      } catch (e) {
+        msg(`${T.problems.delFailed}${e.message || e}`, 'error');
+      }
+    });
+  });
+}
+
+/** 题目编辑字段。和新增共用，避免两处定义漂移。 */
+const PROBLEM_FIELDS = [
+  { key: 'letter', label: T.problems.colLetter, hint: T.problems.letterHint },
+  { key: 'title', label: T.problems.colTitle },
+  { key: 'summary', label: T.problems.colNote, type: 'textarea', rows: 2,
+    hint: T.problems.noteHint },
+];
+
+function statusLabel(s) {
+  return ({ candidate: T.problems.stCandidate, analysed: T.problems.stAnalysed,
+            chosen: T.problems.stChosen, rejected: T.problems.stRejected })[s]
+    || s || '—';
+}
+
+/** 锁定确认。锁定会收窄侧栏，是个不可忽略的动作，所以要确认。 */
+function lockProblemModal(problemId, repaint) {
+  openModal(`<h2>${T.problems.lockTitle}</h2>
+    <p class="muted small">${T.problems.lockHint}</p>
+    <div class="field">
+      <label>${T.problems.colLetter}</label>
+      <input class="input" value="${esc(problemId)}" disabled>
+    </div>
+    <div class="field">
+      <label>${T.problems.teamNumber}</label>
+      <input class="input" id="lock-team" placeholder="2400996"
+        value="${esc((STATE.problem || {}).team_number || '')}">
+      <div class="small muted">${T.problems.teamHint}</div>
+    </div>
+    <div id="modal-error" class="error-box small" hidden></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="modal-save">${T.problems.lockBtn}</button>
+      <button class="btn" id="modal-cancel">${T.cancel}</button>
+    </div>`);
+  $('#modal-cancel').onclick = () => { $('#modal').hidden = true; };
+  $('#modal-save').onclick = async () => {
+    const err = $('#modal-error');
+    err.hidden = true;
+    try {
+      await api('/api/project/lock', {
+        method: 'POST',
+        body: JSON.stringify({
+          problem_id: problemId,
+          team_number: $('#lock-team').value.trim() || null,
+        }),
+      });
+      $('#modal').hidden = true;
+      toast(T.problems.locked2);
+      await repaint();
+    } catch (e) {
+      err.textContent = `${T.problems.lockFailed}${e.message || e}`;
+      err.hidden = false;
+    }
+  };
+}
+
+function editProblemModal(rec, repaint) {
+  openModal(`<h2>${esc(T.math.edit)}：${esc(rec.id)}</h2>
+    ${fieldEditor(PROBLEM_FIELDS, rec)}
+    <div id="modal-error" class="error-box small" hidden></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="modal-save">${T.math.save}</button>
+      <button class="btn" id="modal-cancel">${T.cancel}</button>
+    </div>`);
+  $('#modal-cancel').onclick = () => { $('#modal').hidden = true; };
+  $('#modal-save').onclick = async () => {
+    const err = $('#modal-error');
+    err.hidden = true;
+    let v;
+    try { v = readFields(PROBLEM_FIELDS); }
+    catch (e) { err.textContent = e.message; err.hidden = false; return; }
+    try {
+      await api(`/api/problems/${encodeURIComponent(rec.id)}`, {
+        method: 'PUT', body: JSON.stringify(v),
+      });
+      $('#modal').hidden = true;
+      toast(T.math.saved);
+      await repaint();
+    } catch (e) {
+      err.textContent = `${T.problems.saveFailed}${e.message || e}`;
+      err.hidden = false;
+    }
+  };
 }
 
 // -- 设置 -------------------------------------------------------------------
 async function screenSettings(root) {
+  setHeader(T.settings.title, T.settings.sub);
+  await paintSettings(root);
+}
+
+async function paintSettings(root) {
   const project = await api('/api/project');
   const mode = await api('/api/mode');
-  setHeader(T.settings.title, T.settings.sub);
 
   root.innerHTML = `
     <div class="grid grid-2">
@@ -1654,6 +1956,12 @@ async function screenSettings(root) {
           <div><span>${T.settings.phase}</span><b>${esc(phaseLabel(project.phase))}</b></div>
           <div><span>${T.settings.lockedProblem}</span><b>${esc(project.locked_problem_id || '—')}</b></div>
           <div><span>${T.settings.teamNumber}</span><b>${esc(project.team_control_number || '—')}</b></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-mini" id="set-team">${T.settings.editTeam}</button>
+          ${project.locked_problem_id
+            ? `<button class="btn btn-mini btn-danger" id="set-unlock">${
+                T.settings.unlock}</button>` : ''}
         </div>
       </div>
       <div class="card">
@@ -1673,6 +1981,61 @@ async function screenSettings(root) {
         </div>` : ''}
       </div>
     </div>`;
+
+  // 队伍号：印在摘要页上，比赛期间可能后补或改动。
+  // 没有入口的话，用户只能去手工编辑 project.yaml。
+  const teamBtn = $('#set-team');
+  if (teamBtn) {
+    teamBtn.onclick = () => {
+      openModal(`<h2>${T.settings.editTeam}</h2>
+        <div class="field">
+          <label>${T.settings.teamNumber}</label>
+          <input class="input" id="team-input" value="${
+            esc(project.team_control_number || '')}" placeholder="2400996">
+          <div class="small muted">${T.settings.teamHint}</div>
+        </div>
+        <div id="modal-error" class="error-box small" hidden></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="modal-save">${T.math.save}</button>
+          <button class="btn" id="modal-cancel">${T.cancel}</button>
+        </div>`);
+      $('#modal-cancel').onclick = () => { $('#modal').hidden = true; };
+      $('#modal-save').onclick = async () => {
+        const err = $('#modal-error');
+        err.hidden = true;
+        try {
+          await api('/api/project', {
+            method: 'PUT',
+            body: JSON.stringify({
+              team_control_number: $('#team-input').value.trim(),
+            }),
+          });
+          $('#modal').hidden = true;
+          toast(T.math.saved);
+          await refresh();
+          await paintSettings(root);
+        } catch (e) {
+          err.textContent = `${T.settings.saveFailed}${e.message || e}`;
+          err.hidden = false;
+        }
+      };
+    };
+  }
+
+  // 解锁：锁错题、或想回头比较几道题时的退路
+  const unlockBtn = $('#set-unlock');
+  if (unlockBtn) {
+    unlockBtn.onclick = () => confirmDelete(T.settings.unlock, async () => {
+      try {
+        await api('/api/project/unlock', { method: 'POST' });
+        toast(T.settings.unlocked);
+        await refresh();
+        await paintSettings(root);
+      } catch (e) {
+        toast(`${T.settings.unlockFailed}${e.message || e}`);
+      }
+    });
+  }
 }
 
 // ---------------------------------------------------------------- 弹窗
