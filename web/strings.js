@@ -222,6 +222,8 @@ export const T = {
     created: '实验已创建。',
     createFailed: '创建失败：',
     addVary: '+ 加一个变动参数',
+    fTpl: '套模板（可选）', fTplHint: '九种常见实验设计，自带默认参数和输入说明。不确定怎么填就选一个。',
+    fTplNone: '（不使用模板）',
     fLabel: '名称', fLabelHint: '写清这个实验在验证什么，例如「硬模式权重敏感性」。',
     fKind: '类型', fKindHint: '决定展开试验的方式和默认出图。敏感性分析选 OAT（逐个变）或网格。',
     fDataset: '数据集编号（可选）', fDatasetHint: '留空则不绑定数据集。绑了之后结果会记下数据来源。',

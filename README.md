@@ -127,6 +127,8 @@ templates/
 | 想了解 | 看 |
 |---|---|
 | **目录结构、什么能删** | [docs/project-layout.md](docs/project-layout.md) |
+| **从零到交论文的完整操作** | [docs/usage-guide.md](docs/usage-guide.md) |
+| **东西叫什么、按什么范式、放哪里** | [docs/naming-and-layout.md](docs/naming-and-layout.md) |
 | 完整流程走一遍 | [docs/workbench-guide.md](docs/workbench-guide.md) |
 | 部署到另一台机器 | [docs/DEPLOY.md](docs/DEPLOY.md) |
 | 模板怎么用 | [docs/template-library.md](docs/template-library.md) |

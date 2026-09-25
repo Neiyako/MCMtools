@@ -170,3 +170,59 @@ class TestGuidance:
         for t in ("article", "inproceedings", "book"):
             assert t in REQUIRED_FIELDS
             assert "title" in REQUIRED_FIELDS[t] or True
+
+
+class TestMacroNaming:
+    """宏名规则。
+
+    LaTeX 控制序列只能是字母，所以 RES-0142 必须拼成
+    \\numRESZeroOneFourTwo —— 这不是排版讲究，是硬限制。
+    """
+
+    def test_digits_are_spelled_out(self) -> None:
+        from mcmcore.compiler.numbers import macro_name
+
+        assert macro_name("RES-0142") == "numRESZeroOneFourTwo"
+
+    def test_rendering_suffix(self) -> None:
+        from mcmcore.compiler.numbers import macro_name
+
+        assert macro_name("RES-0142", "Pct") == "numRESZeroOneFourTwoPct"
+
+    def test_alias_camel_case(self) -> None:
+        from mcmcore.compiler.numbers import alias_macro_name
+
+        assert alias_macro_name("r_squared") == "numRSquared"
+        assert alias_macro_name("beta") == "numBeta"
+
+    def test_alias_drops_digits(self) -> None:
+        """别名带数字会被丢掉 —— 控制序列不能含数字。"""
+        from mcmcore.compiler.numbers import alias_macro_name
+
+        assert alias_macro_name("R0") == "numR"
+
+    def test_generated_names_are_letters_only(self) -> None:
+        """任何原子 ID 生成的宏名都必须只含字母。"""
+        from mcmcore.compiler.numbers import macro_name
+
+        for aid in ("RES-0142", "RES-EXP001-FINAL-LOYAL-003", "RES-1001", "X"):
+            name = macro_name(aid)
+            assert name.isalpha(), f"{aid} -> {name} 含非字母字符"
+
+    def test_duplicate_alias_does_not_silently_overwrite(self) -> None:
+        """两个原子用同一个别名时，后者退回长名。
+
+        覆盖的后果是论文里某个数字悄值变成另一个数的值 ——
+        这种错几乎不可能靠人眼发现。
+        """
+        from mcmcore.compiler.numbers import NumberMacros
+        from mcmcore.schemas import ResultAtom
+
+        t = NumberMacros()
+        a = ResultAtom(atom_id="RES-001", name="a", value=0.82, macro_alias="r2")
+        b = ResultAtom(atom_id="RES-002", name="b", value=0.79, macro_alias="r2")
+        first = t.add_atom(a)
+        second = t.add_atom(b)
+        assert first == ["numR"]
+        assert second != first, "第二个原子沿用了同名宏，会覆盖"
+        assert t.macros["numR"] == "0.82", "第一个原子的值被改掉了"

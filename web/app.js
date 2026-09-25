@@ -808,7 +808,7 @@ async function paintExperiments(root) {
       <div class="card">
         <h2>${T.experiments.newTitle}</h2>
         <div class="muted small">${T.experiments.newHint}</div>
-        <div id="exp-form">${fieldEditor(experimentFields(), {})}</div>
+        <div id="exp-form"></div>
         <div id="exp-varies"></div>
         <div class="btn-row">
           <button class="btn btn-mini" id="exp-add-vary">${
@@ -857,7 +857,7 @@ async function paintExperiments(root) {
     <div class="card">
       <h2>${T.experiments.newTitle}</h2>
       <div class="muted small">${T.experiments.newHint}</div>
-      <div id="exp-form">${fieldEditor(experimentFields(), {})}</div>
+      <div id="exp-form"></div>
       <div id="exp-varies"></div>
       <div class="btn-row">
         <button class="btn btn-mini" id="exp-add-vary">${
@@ -867,8 +867,9 @@ async function paintExperiments(root) {
       </div>
       <div id="exp-msg" class="small" hidden></div>
     </div>`;
-  await wireExperimentForm(root);
-
+  // 先把「运行」按钮接上，再装新建表单。
+  // 新建表单要异步拉模板列表，万一失败，不能连累已有实验的运行按钮 ——
+  // 实测就是这样：表单抛错，运行按钮全成了摆设。
   root.querySelectorAll('[data-run]').forEach(b => b.onclick = async () => {
     const id = b.getAttribute('data-run');
     b.disabled = true; b.textContent = T.experiments.running;
@@ -894,6 +895,10 @@ async function paintExperiments(root) {
       <ol class="trials">${trials.map(t =>
         `<li><code>${esc(t.condition)}</code></li>`).join('')}</ol>`);
   });
+
+  // 最后装新建表单。它要异步拉模板列表，慢一点、甚至失败，
+  // 都不该影响上面那些已经接好的按钮。
+  await wireExperimentForm(root);
 }
 
 /** 实验类型。与后端 ExperimentKind 保持一致。 */
@@ -914,8 +919,11 @@ const EXPERIMENT_KINDS = [
   { value: 'other', key: 'kOther' },
 ];
 
-function experimentFields() {
+function experimentFields(tplOptions) {
   return [
+    { key: 'template_id', label: T.experiments.fTpl, type: 'select',
+      options: [{ value: '', label: T.experiments.fTplNone }].concat(tplOptions || []),
+      hint: T.experiments.fTplHint },
     { key: 'label', label: T.experiments.fLabel, hint: T.experiments.fLabelHint },
     { key: 'kind', label: T.experiments.fKind, type: 'select',
       options: EXPERIMENT_KINDS.map(k => ({ value: k.value, label: T.experiments[k.key] })),
@@ -944,8 +952,25 @@ function varyRowHtml(idx) {
 }
 
 async function wireExperimentForm(root) {
-  const box = root.querySelector('#exp-varies');
-  const fieldList = experimentFields();
+  // box 必须**在 await 之后**再取。提前取会拿到一个随后被
+  // innerHTML 换掉的游离节点：里面的 .vary-row 用户看不见，
+  // 用户看得见的那份又读不到，于是「填了变动参数却只跑一次」。
+  // 实测就是这个问题，而且只在空项目上出现（非空分支不重渲染）。
+  let box = root.querySelector('#exp-varies');
+  // 套模板是新手最快的路：模板带了默认值和输入说明。
+  // 拉不到就退回空选项，不影响手工填写。
+  let tplOptions = [];
+  try {
+    const ts = await api('/api/templates?kind=experiment');
+    tplOptions = (Array.isArray(ts) ? ts : (ts.templates || [])).map(t => ({
+      value: t.template_id || t.id,
+      label: `${t.template_id || t.id}${t.description ? ' — ' + String(t.description).slice(0, 40) : ''}`,
+    }));
+  } catch { /* 没有模板也能建 */ }
+  const fieldList = experimentFields(tplOptions);
+  // 模板列表是异步拉的，所以表单在这里才填
+  box = root.querySelector('#exp-varies');
+  root.querySelector('#exp-form').innerHTML = fieldEditor(fieldList, {});
   box.innerHTML = `<div class="muted small" style="margin-top:12px">${
     T.experiments.varyTitle}</div>
     <div class="muted small">${T.experiments.varyHint}</div>
@@ -959,9 +984,9 @@ async function wireExperimentForm(root) {
     el.textContent = t;
   };
   const bindDel = () => {
-    box.querySelectorAll('[data-v-del]').forEach(b => {
+    root.querySelectorAll('#exp-varies [data-v-del]').forEach(b => {
       b.onclick = () => {
-        const rows = box.querySelectorAll('.vary-row');
+        const rows = root.querySelectorAll('#exp-varies .vary-row');
         if (rows.length <= 1) {
           rows[0].querySelectorAll('input').forEach(i => { i.value = ''; });
           return;
@@ -973,15 +998,25 @@ async function wireExperimentForm(root) {
   bindDel();
 
   root.querySelector('#exp-add-vary').onclick = () => {
-    box.querySelector('#vary-rows').insertAdjacentHTML('beforeend', varyRowHtml(n++));
+    root.querySelector('#exp-varies #vary-rows')
+        .insertAdjacentHTML('beforeend', varyRowHtml(n++));
     bindDel();
   };
 
   root.querySelector('#exp-create').onclick = async () => {
     root.querySelector('#exp-msg').hidden = true;
-    const v = readFields(fieldList);
+    // readFields 必须在 try 里：它是 async handler，抛出去会变成
+    // 未处理的 Promise 拒绝 —— 界面上什么都不显示，用户只看到
+    // "点了没反应"。实测就是这样，查了很久。
+    let v;
+    try {
+      v = readFields(fieldList);
+    } catch (e) {
+      msg(e.message, false);
+      return;
+    }
     // 变动参数：填了名字才算，空行直接跳过
-    const varied = [...box.querySelectorAll('.vary-row')].map(r => {
+    const varied = [...root.querySelectorAll('#exp-varies .vary-row')].map(r => {
       const name = r.querySelector('[data-v-name]').value.trim();
       const rawVals = r.querySelector('[data-v-values]').value.trim();
       const unit = r.querySelector('[data-v-unit]').value.trim();

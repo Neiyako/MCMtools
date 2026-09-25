@@ -7,7 +7,7 @@ parameters:
   fitted_by: genetic algorithm then Nelder-Mead minimising MSE
 - id: P12
   name: gamma
-  value: 0.052
+  value: 0.041
   source: fitted
   candidate_values: []
   fitted_by: genetic algorithm then Nelder-Mead minimising MSE

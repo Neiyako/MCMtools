@@ -1,49 +1,49 @@
 runs:
-- run_id: RUN-001-064
+- run_id: RUN-001-196
   experiment_id: EXP-001
   resolved_parameters:
-    gamma: 0.052
+    gamma: 0.041
     lambda: 0.00104
     phi: 0.00114
     beta: 0.1
   random_seed: null
-  started_at: 2026-09-25 14:42:12.990739+00:00
-  duration_seconds: 0.017
+  started_at: 2026-09-25 16:49:29.404123+00:00
+  duration_seconds: 0.0151
   exit_code: 0
   status: success
   software: Python 3.9.6
   artifact_paths:
-  - runs/EXP-001/RUN-001-064/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.1_days120_dt0.05_gamma0.052_lambda0.00104_phi0.00114.csv
+  - runs/EXP-001/RUN-001-196/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.1_days120_dt0.05_gamma0.041_lambda0.00104_phi0.00114.csv
   stderr_tail: null
-- run_id: RUN-001-065
+- run_id: RUN-001-197
   experiment_id: EXP-001
   resolved_parameters:
-    gamma: 0.052
+    gamma: 0.041
     lambda: 0.00104
     phi: 0.00114
     beta: 0.177
   random_seed: null
-  started_at: 2026-09-25 14:42:13.009050+00:00
-  duration_seconds: 0.0166
+  started_at: 2026-09-25 16:49:29.420326+00:00
+  duration_seconds: 0.0152
   exit_code: 0
   status: success
   software: Python 3.9.6
   artifact_paths:
-  - runs/EXP-001/RUN-001-065/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.177_days120_dt0.05_gamma0.052_lambda0.00104_phi0.00114.csv
+  - runs/EXP-001/RUN-001-197/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.177_days120_dt0.05_gamma0.041_lambda0.00104_phi0.00114.csv
   stderr_tail: null
-- run_id: RUN-001-066
+- run_id: RUN-001-198
   experiment_id: EXP-001
   resolved_parameters:
-    gamma: 0.052
+    gamma: 0.041
     lambda: 0.00104
     phi: 0.00114
     beta: 0.25
   random_seed: null
-  started_at: 2026-09-25 14:42:13.026814+00:00
-  duration_seconds: 0.0165
+  started_at: 2026-09-25 16:49:29.436580+00:00
+  duration_seconds: 0.0148
   exit_code: 0
   status: success
   software: Python 3.9.6
   artifact_paths:
-  - runs/EXP-001/RUN-001-066/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.25_days120_dt0.05_gamma0.052_lambda0.00104_phi0.00114.csv
+  - runs/EXP-001/RUN-001-198/artifacts/trajectory_C01000.0_L00.0_N300000.0_beta0.25_days120_dt0.05_gamma0.041_lambda0.00104_phi0.00114.csv
   stderr_tail: null

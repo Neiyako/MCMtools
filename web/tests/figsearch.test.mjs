@@ -51,10 +51,26 @@ if (sel && filter) {
   const initial = sel.options.length;
   check('初始列出全部可用图模板', initial >= 20, `实际 ${initial} 个`);
 
+  /** 输入搜索词并等结果稳定。
+   *
+   * 原来固定等 700ms。搜索走网络，跑整套测试时机器忙，700ms 不够，
+   * 读到的还是**上一次查询**的结果 —— 表现为"搜时间命中了热力图"，
+   * 单跑必过、整套跑偶尔失败。这种假失败比真 bug 更浪费时间。
+   * 改成轮询到结果不再变化为止，并且要求在超时前至少变过一次。
+   */
   async function search(q) {
+    const before = [...sel.options].map(o => o.value).join(',');
     filter.value = q;
     filter.dispatchEvent(new win.Event('input'));
-    await new Promise(r => setTimeout(r, 700));
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      const now = [...sel.options].map(o => o.value).join(',');
+      // 结果和输入前不同 = 这次渲染已经落地
+      if (now !== before) {
+        await new Promise(r => setTimeout(r, 150));  // 再稳一下
+        return [...sel.options].map(o => o.value);
+      }
+    }
     return [...sel.options].map(o => o.value);
   }
 

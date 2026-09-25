@@ -921,10 +921,10 @@ def create_app(project_root: Path) -> FastAPI:
             n = len(st.list_experiments()) + 1
             while True:
                 eid = f"EXP-{n:03d}"
-                if not (st.layout.experiment_path(eid) / "experiment.yaml").is_file():
+                if not st.layout.experiment_path(eid).is_file():
                     break
                 n += 1
-        elif (st.layout.experiment_path(eid) / "experiment.yaml").is_file():
+        elif st.layout.experiment_path(eid).is_file():
             raise HTTPException(409, f"实验 {eid} 已存在。")
 
         # 变动参数：面板传来的是 [{name, values|range, step, unit}]
@@ -946,6 +946,61 @@ def create_app(project_root: Path) -> FastAPI:
                     422, f"变动参数「{kw['name']}」要给出取值列表或区间，否则没法展开试验。")
             varied.append(Varied(**kw))
 
+        # 套模板：模板带 defaults（n_runs、aggregation 等）和输入说明。
+        # 光有 schema 不够 —— 新用户不知道 sensitivity_oat 该填什么参数，
+        # 也不知道运行脚本长什么样，跑不起来就永远拿不到第一个结果。
+        tpl = payload.get("template_id")
+        tpl_defaults: Dict[str, Any] = {}
+        tpl_inputs: List[Dict[str, Any]] = []
+        if tpl:
+            from .templates import TemplateRegistry, default_registry_root
+
+            reg = TemplateRegistry(default_registry_root()).load_strict()
+            try:
+                t = reg.get(str(tpl))
+            except KeyError:
+                t = None
+            # reg.get() 找不到时返回 None 而不是抛异常，两种都要接住
+            if t is None:
+                raise HTTPException(404, f"没有这个实验模板：{tpl}")
+            tkind = getattr(t.kind, "value", t.kind)
+            if tkind != "experiment":
+                raise HTTPException(
+                    422, f"{tpl} 不是实验模板，它的类型是 {tkind}。")
+            tpl_defaults = dict(getattr(t, "defaults", None) or {})
+            # 模板目录名和 ExperimentKind 是同义词但不是同一个字符串，
+            # 所以显式列出来，不做字符串猜测 —— 猜错会让实验类型
+            # 与实际做的分析对不上，而类型决定默认出图。
+            _KIND_OF_TPL = {
+                "exp.sensitivity_oat": "sensitivity_oat",
+                "exp.sensitivity_grid": "sensitivity_grid",
+                "exp.model_comparison": "model_comparison",
+                "exp.robustness_noise": "robustness_noise",
+                "exp.monte_carlo": "monte_carlo",
+                "exp.cross_validation": "cross_validation",
+                "exp.convergence_study": "convergence_study",
+                "exp.scenario": "scenario",
+                "exp.train_test": "train_test",
+            }
+            if not payload.get("kind") and str(tpl) in _KIND_OF_TPL:
+                kind = _KIND_OF_TPL[str(tpl)]
+            for i in (getattr(t, "inputs", None) or []):
+                tpl_inputs.append(
+                    i.model_dump() if hasattr(i, "model_dump") else dict(i))
+
+        # 模板的 defaults 里有些键不是 Experiment 的字段（例如
+        # dispersion_kind —— 它是"怎么算离散度"的说明，不是模型属性）。
+        # schema 是 extra="forbid"，直接透传会整条建不出来。
+        # 所以只取认识的那些，剩下的作为提示返回，不静默丢掉。
+        if varied:
+            # 用户填了变动轴就说明他知道自己要什么，不该被模板默认值覆盖
+            accepted_defaults: Dict[str, Any] = {}
+        else:
+            fields = set(Experiment.model_fields.keys())
+            accepted_defaults = {k: v for k, v in tpl_defaults.items() if k in fields}
+        ignored_defaults = {k: v for k, v in tpl_defaults.items()
+                            if k not in accepted_defaults}
+
         try:
             exp = Experiment(
                 id=eid, label=label or None, kind=kind,
@@ -955,17 +1010,25 @@ def create_app(project_root: Path) -> FastAPI:
                 entrypoint=payload.get("entrypoint") or None,
                 varied=varied,
                 random_seed=payload.get("random_seed"),
+                **accepted_defaults,
             )
         except Exception as exc:  # noqa: BLE001
             raise HTTPException(422, f"实验协议填得不对：{exc}")
         st.save_experiment(exp)
-        return {"experiment": exp.model_dump(by_alias=True)}
+        out: Dict[str, Any] = {"experiment": exp.model_dump(by_alias=True)}
+        if tpl_inputs:
+            out["template_inputs"] = tpl_inputs
+        if ignored_defaults:
+            # 这些默认值没有对应的模型字段，告诉用户而不是咽掉
+            out["template_notes"] = ignored_defaults
+        return out
 
     @app.delete("/api/experiments/{exp_id}")
     def delete_experiment(exp_id: str) -> Dict[str, Any]:
         st = store()
-        d = st.layout.experiment_path(exp_id)
-        f = d / "experiment.yaml"
+        # experiment_path() 返回的是**文件**路径（…/experiments/EXP-001/experiment.yaml），
+        # 不是目录。早先当成目录用，删除和查重都失效。
+        f = st.layout.experiment_path(exp_id)
         if not f.is_file():
             raise HTTPException(404, f"没有实验 {exp_id}")
         if st.load_experiment(exp_id).run_ids:
@@ -975,7 +1038,7 @@ def create_app(project_root: Path) -> FastAPI:
                      f"先确认那些结果不需要，再手工清理。")
         f.unlink()
         try:
-            d.rmdir()
+            f.parent.rmdir()   # 目录空了才删掉，里面还有别的文件就留着
         except OSError:
             pass
         return {"removed": exp_id}

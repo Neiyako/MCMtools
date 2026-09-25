@@ -38,6 +38,9 @@ await wait(1800);
 const root = win.document.getElementById('view')
   || win.document.getElementById('app');
 const $ = (id) => root.querySelector('#' + id);
+const view = () => win.document.getElementById('view')
+  || win.document.getElementById('app');
+const J = async (path) => (await fetch(new URL(path, BASE).href)).json();
 
 console.log('=== 选题页有可操作的入口 ===');
 // 这一条是核心：页面必须提供"行动"，不能只是"展示"。
@@ -126,6 +129,48 @@ if (teamBtn) {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ team_control_number: teamBefore }),
     });
+  }
+}
+
+
+// ---------------------------------------------------------------------------
+// 实验页：变动参数必须真的存下来
+// ---------------------------------------------------------------------------
+//
+// 这曾经是个只在**空项目**上出现的 bug：创建实验的那张卡片渲染后，
+// wireExperimentForm 里提前捕获的 #exp-varies 被一次重渲染换掉，
+// 于是读的是用户看不见的游离节点，读出来永远是空数组。
+// 表现是"填了变动参数却只跑一次"，而页面完全正常、接口也不报错。
+//
+// 所以这条断言必须落在**到达后端的 varied** 上，不能只看页面。
+console.log('\n=== 实验页：变动参数 ===');
+{
+  probe.go('experiments'); await wait(2500);
+  const box = view().querySelector('#exp-varies');
+  check('有变动参数区域', !!box);
+  const label = '回归-变动参数-' + Date.now();
+  const sel = $('fld-template_id');
+  if (sel && sel.options.length) {
+    sel.value = [...sel.options].map(o => o.value)
+      .find(v => v.includes('sensitivity_oat')) || sel.options[0].value;
+  }
+  $('fld-label').value = label;
+  const row = view().querySelector('#exp-varies .vary-row');
+  row.querySelector('[data-v-name]').value = 'w';
+  row.querySelector('[data-v-values]').value = '0.1, 0.5';
+  $('exp-create').click(); await wait(3000);
+
+  const made = (await J('/api/experiments')).find(e => e.label === label);
+  check('实验建出来了', !!made, made ? made.id : '没找到');
+  check('变动参数存下来了（不是空数组）',
+    (made?.varied || []).length === 1, JSON.stringify(made?.varied));
+  check('取值解析正确',
+    JSON.stringify(made?.varied?.[0]?.values) === '[0.1,0.5]',
+    JSON.stringify(made?.varied?.[0]?.values));
+  if (made) {
+    check('展开 2 次试验',
+      (await J(`/api/experiments/${made.id}/trials`)).length === 2);
+    await fetch(new URL(`/api/experiments/${made.id}`, BASE).href, { method: 'DELETE' });
   }
 }
 
