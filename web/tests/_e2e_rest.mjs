@@ -31,7 +31,7 @@ check('实验页有交互', ebtns.length > 0, ebtns.join(','));
 
 console.log('\n### 生图工作台 ###');
 probe.go('figures'); await wait(3200);
-const fbtns = [...view().querySelectorAll('button')].length;
+const fbtns = [...view().querySelectorAll("button")].length;
 console.log('  按钮数:', fbtns);
 check('生图页能列出模板', txt().includes('图模板') || txt().includes('模板'), txt().slice(0,70));
 const figs = await J('/api/figures/templates').catch(()=>null);

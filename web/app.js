@@ -808,7 +808,7 @@ async function paintExperiments(root) {
       <div class="card">
         <h2>${T.experiments.newTitle}</h2>
         <div class="muted small">${T.experiments.newHint}</div>
-        <div id="exp-form">${fieldEditor(EXPERIMENT_FIELDS, {})}</div>
+        <div id="exp-form">${fieldEditor(experimentFields(), {})}</div>
         <div id="exp-varies"></div>
         <div class="btn-row">
           <button class="btn btn-mini" id="exp-add-vary">${
@@ -853,7 +853,21 @@ async function paintExperiments(root) {
       </div>
     </div>`;
   });
-  root.innerHTML = `<div class="grid grid-3">${cards.join('')}</div>`;
+  root.innerHTML = `<div class="grid grid-3">${cards.join('')}</div>
+    <div class="card">
+      <h2>${T.experiments.newTitle}</h2>
+      <div class="muted small">${T.experiments.newHint}</div>
+      <div id="exp-form">${fieldEditor(experimentFields(), {})}</div>
+      <div id="exp-varies"></div>
+      <div class="btn-row">
+        <button class="btn btn-mini" id="exp-add-vary">${
+          T.experiments.addVary}</button>
+        <button class="btn btn-primary" id="exp-create">${
+          T.experiments.createBtn}</button>
+      </div>
+      <div id="exp-msg" class="small" hidden></div>
+    </div>`;
+  await wireExperimentForm(root);
 
   root.querySelectorAll('[data-run]').forEach(b => b.onclick = async () => {
     const id = b.getAttribute('data-run');
