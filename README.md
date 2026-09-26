@@ -5,6 +5,13 @@
 比赛那几天不该依赖任何在线服务 —— 网络会断、额度会用完、服务会排队。
 所以模板、生图、编译、审计全部本地跑，不联网。
 
+一屏看懂：
+
+- **面板** —— 浏览器里点选完成：选题、数据、建模、实验、生图、写论文
+- **模板库** —— 101 个现成骨架，比赛期间不从零开始
+- **结果原子** —— 每个数字只有一个来源，正文用宏引用，改参数全篇自动一致
+- **审计** —— 数字没绑定、图表没引用、占位符没填，编译前就报出来
+
 ---
 
 ## 快速开始
@@ -26,6 +33,11 @@ cd MCMtools
 
 **Windows**：双击 `start.bat`。
 **macOS**：`./build-app.sh` 生成 `MCMtools.app` 后可双击启动。
+
+**懒得自己动手**：[docs/AGENT_PROMPTS.md](docs/AGENT_PROMPTS.md) 里是
+提前写好的自包含提示词，整段复制给任意 AI 编码助手
+（Claude Code、Cursor、DeepSeek 等），它替你完成部署、打包 `.app`、
+做分发包和排障 —— 每段自带验收标准和禁区。
 
 **只要求系统里有 Python 3.9+**，不用预装别的。TeX Live 可选 ——
 没有它只是不能编译 PDF，审计、面板、出图都照常。
@@ -206,12 +218,13 @@ MCMtools/              软件本体
 
 ## 文档
 
-就这 5 份：
+就这 6 份：
 
 | 文档 | 看它 |
 |---|---|
 | **README**（本文） | 项目概览、快速开始、命令行 |
 | [DEPLOY.md](docs/DEPLOY.md) | 部署到另一台机器、给队友拷贝 |
+| [AGENT_PROMPTS.md](docs/AGENT_PROMPTS.md) | 现成的 AI 助手提示词：部署、打包 `.app`、分发包、排障 |
 | [molderread.md](docs/molderread.md) | 建模手：拆题、符号、公式、假设、参数 |
 | [coderread.md](docs/coderread.md) | 代码手：写实验脚本、调试、结果追溯 |
 | [writerread.md](docs/writerread.md) | 论文手：写正文、出图、控页数、交付检查 |

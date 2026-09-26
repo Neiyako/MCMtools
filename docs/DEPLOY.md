@@ -2,6 +2,21 @@
 
 把 MCMtools 拷到新电脑上，让它跑起来。原则上**只要有 Python 3.9+ 就能用**。
 
+> **不想自己动手？** [AGENT_PROMPTS.md](AGENT_PROMPTS.md) 里有提前写好的
+> 自包含提示词：整段复制给任意 AI 编码助手，它替你完成部署、打包 `.app`、
+> 做分发包或排障，每段自带验收标准和禁区。本文剩下的部分讲原理和细节。
+
+## 一分钟速览
+
+```bash
+python3 --version        # ≥ 3.9，唯一的硬要求
+./core/mcm doctor        # 只读检查：缺什么、装什么，一个字不改
+./start ~/mcm/2026A      # 自动装依赖、起服务、开面板
+./core/mcm deploy        # 自检：模板应报 101 个
+```
+
+四条都过，部署就算完成。下面按结构 → 依赖 → 各平台展开。
+
 ---
 
 ## 一、先搞清楚它的结构
@@ -252,5 +267,6 @@ git pull
 
 ## 相关
 
+- 现成的 AI 助手提示词（部署 / 打包 / 排障） → [AGENT_PROMPTS.md](AGENT_PROMPTS.md)
 - 项目概览与快速开始 → [README](../README.md)
 - 三个角色的使用指南 → [molderread.md](molderread.md) / [coderread.md](coderread.md) / [writerread.md](writerread.md)
