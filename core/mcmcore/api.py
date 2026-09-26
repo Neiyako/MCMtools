@@ -88,9 +88,9 @@ class AIUsageRequest(BaseModel):
 def _registry():
     """加载模板注册表。每次调用都读盘 —— 模板是用户会自己加的，
     不能缓存住让新模板不出现。"""
-    from .templates import TemplateRegistry, default_registry_root
+    from .templates import load_registry
 
-    return TemplateRegistry(default_registry_root()).load_strict()
+    return load_registry()
 
 
 def _template_has_code(template_id: str) -> bool:
@@ -98,11 +98,14 @@ def _template_has_code(template_id: str) -> bool:
 
     只有元数据、没有 render.py 的模板在工作台里画不出东西，
     面板要如实标出来，而不是让用户点了才发现。
+
+    必须遍历全部模板根：DIY 存的模板在 ~/.mcmtools/templates 下，
+    只看自带库会把它标成"没有绘制代码"，而它明明能画。
     """
-    from .templates import default_registry_root
+    from .root import find_template_file
 
     name = template_id.split(".")[-1]
-    return (default_registry_root() / "figures" / name / "render.py").is_file()
+    return find_template_file("figures", name, "render.py") is not None
 
 
 def _ref_from_dict(d: Dict[str, Any]):
@@ -125,6 +128,133 @@ def _close_fig(fig) -> None:
         plt.close(fig)
     except Exception:
         pass
+
+
+def _num_or_str(x: str):
+    """面板里填的变动参数一律是文本，能当数字就当数字。
+
+    实验的变动轴经常是 ``0.1, 0.5, 1.0`` 这种，全按字符串存下去的话，
+    参数表里会出现 "0.1" 和 0.1 两种写法，算指纹和画图时对不上。
+    """
+    try:
+        f = float(x)
+    except (TypeError, ValueError):
+        return x
+    return int(f) if f.is_integer() and "." not in x else f
+
+
+def _snippet_runner_source(snippet_id: str, purpose: str,
+                           param_names: List[str]) -> str:
+    """生成一个能直接跑的实验脚本，基于某个代码骨架。
+
+    生成的不是骨架的副本，而是一段**适配层**：
+
+    * 骨架是独立脚本（``main()`` + 自造模拟数据 + 把图写进临时目录），
+      而实验协议要的是 ``run(trial) -> {"atoms": [...]}``；
+    * 直接把骨架拷过来会因签名不对而跑不起来，用户得自己琢磨怎么接。
+
+    所以这里给的是一份自带最小模型、结构完整的 run.py：契约是对的、
+    跑得通、有结果原子，用户只要把 MODEL 那一段换成自己的模型。
+    骨架 id 写在文件头，方便回头去看它的完整实现。
+    """
+    params_doc = "、".join(f"`{n}`" for n in param_names)
+    lines = [
+        f'"""由代码骨架 {snippet_id} 生成 —— 可直接运行，改 MODEL 一段即可。',
+        "",
+        f"骨架用途：{purpose}",
+        "",
+        "这个文件是一层**适配**，不是骨架的副本：实验协议要的是",
+        '    def run(trial: dict) -> {"atoms": [...]}',
+        "而骨架本身是独立脚本（有 main()、自己造模拟数据、把图写到临时目录），",
+        "签名对不上。所以这里保留契约、内嵌一个最小模型，",
+        "你把 MODEL 那一段换成自己的模型就行。",
+        "",
+        "要改的地方（就这三处）：",
+        "  1. MODEL 段       —— 换成你的模型函数",
+        "  2. load_data()    —— 换成读你自己的数据（工作目录是项目根，",
+        "                       所以写 data/xxx.csv，不是 ../data/xxx.csv）",
+        "  3. atoms 里的名字 —— macro_alias 决定论文里怎么写：",
+        '                       macro_alias="score" 对应 \\numScore{}',
+        "",
+        f"协议里可用的参数：{params_doc}。",
+        "没在协议里声明变动参数时，trial 就是空的。",
+        "完整参考：docs/coderread.md",
+        '"""',
+        "from __future__ import annotations",
+        "",
+        "from typing import Any, Dict, List",
+        "",
+        "import numpy as np",
+        "",
+        "",
+        "# --------------------------------------------------------------- MODEL",
+        "# ↓↓↓ 换成你的模型 ↓↓↓",
+        "def model(params: Dict[str, Any]) -> float:",
+        '    """模型的输出。这里先用一个占位公式，跑得通但没意义。"""',
+        '    w = float(params.get("w") or 1.0)',
+        "    x = load_data()",
+        "    if x.size == 0:",
+        "        return 0.0",
+        "    return float(np.exp(-w * float(np.mean(x))))",
+        "# ↑↑↑ 换成你的模型 ↑↑↑",
+        "# --------------------------------------------------------------- /MODEL",
+        "",
+        "",
+        "def load_data() -> np.ndarray:",
+        '    """你的数据。默认造一组模拟数据，保证脚本开箱能跑。',
+        "",
+        "    换成真数据时用相对项目根的路径 —— 运行脚本的工作目录",
+        "    就是项目根目录。",
+        '    """',
+        '    # return np.loadtxt("data/your_data.csv", delimiter=",", skiprows=1)',
+        "    rng = np.random.default_rng(0)",
+        "    return rng.normal(loc=1.0, scale=0.2, size=200)",
+        "",
+        "",
+        "def run(trial: Dict[str, Any]) -> Dict[str, Any]:",
+        '    """实验入口。契约见 docs/coderread.md。',
+        "",
+        '    注意返回值**必须**包在 {"atoms": [...]} 里。直接返回',
+        '    {"score": 0.7} 不会报错，但产生 0 个原子 —— 实验显示成功、',
+        "    结果页却是空的，这是最常见的坑。",
+        '    """',
+        "    params = dict(trial or {})",
+        "    value = model(params)",
+        "",
+        "    atoms: List[Dict[str, Any]] = [",
+        "        {",
+        '            "name": "score",',
+        '            "value": value,',
+        '            "macro_alias": "score",',
+        '            "direction": "higher_is_better",',
+        '            "unit": "",',
+        "        },",
+        "    ]",
+        "",
+        '    # 把这次的参数也记成原子：论文里要能写出"在 w=0.5 时"，',
+        "    # 而这些数字同样得只有一个来源。",
+        "    for name, v in params.items():",
+        "        if v is None:",
+        "            continue",
+        "        atoms.append({",
+        '            "name": f"param_{name}",',
+        '            "value": v,',
+        '            "macro_alias": f"param{name[:1].upper()}{name[1:]}",',
+        '            "direction": "neutral",',
+        "        })",
+        "",
+        '    return {"atoms": atoms}',
+        "",
+        "",
+        'if __name__ == "__main__":',
+        "    # 直接 `python3 run.py` 也能看到结果，不用先建协议 ——",
+        "    # 调试模型时比走一遍面板快。",
+        "    import json",
+        "",
+        "    print(json.dumps(run({}), ensure_ascii=False, indent=2))",
+        "",
+    ]
+    return "\n".join(lines)
 
 
 def _count_by_source(ps) -> Dict[str, int]:
@@ -176,6 +306,32 @@ def create_app(project_root: Path) -> FastAPI:
     def get_project() -> Dict[str, Any]:
         cfg = store().layout.load_config()
         return cfg.model_dump(by_alias=True)
+
+    # ------------------------------------------------------------------ 系统
+    @app.get("/api/system")
+    def get_system() -> Dict[str, Any]:
+        """程序装在哪、模板库在哪、用的是哪个 Python。
+
+        这个接口存在的理由很直接：打包成 .app 之后用户报的第一句话是
+        "模板没了"，而这类问题的第一步永远是问"程序认为模板在哪"。
+        以前没有任何地方能看到这个值，只能靠猜。现在把它显示出来。
+
+        全部数据来自 ``root.py`` —— 和程序实际使用的路径是同一个来源，
+        不是另外算一份（两份算法迟早不一致，那比不显示更糟）。
+        """
+        from .root import describe_paths
+
+        info = describe_paths()
+        info["project_root"] = str(root)
+        # 数据目录也跟着项目走，用户要找自己导入的 CSV 时需要它。
+        info["data_dir"] = str(root / "data")
+        info["experiments_dir"] = str(root / "experiments")
+        info["readonly"] = not _writable(info["templates_root"])
+        return info
+
+    def _writable(p: str) -> bool:
+        import os as _os
+        return _os.access(p, _os.W_OK)
 
     # -- 数据集 -----------------------------------------------------------
     @app.post("/api/datasets/import")
@@ -538,6 +694,12 @@ def create_app(project_root: Path) -> FastAPI:
             # 渲染失败是 422 加原因，让工作台把问题显示给用户。
             raise HTTPException(422, f"{type(exc).__name__}: {exc}")
 
+        # 外观覆盖在模板画完之后施加，所以 38 个模板自己不用知道这件事。
+        # 一个旋钮填错不该让图出不来 —— apply_overrides 内部吞掉异常。
+        from . import mcmplot as _mcmplot
+
+        _mcmplot.apply_overrides(fig, payload.get("meta") or {})
+
         buf = io.BytesIO()
         fig.savefig(buf, format="pdf", bbox_inches="tight")
         _close_fig(fig)
@@ -548,13 +710,15 @@ def create_app(project_root: Path) -> FastAPI:
     # -- DIY 生图 ---------------------------------------------------------
     @app.get("/api/diy/options")
     def diy_options() -> Dict[str, Any]:
-        """DIY 能选的图形类型和配色。
+        """DIY 能选的图形类型、配色，以及外观微调旋钮。
 
-        前端不硬编码这些清单 —— 加一种图要同时改两处，早晚不一致。
+        前端不硬编码这些清单 —— 加一种图或一个旋钮要同时改两处，
+        早晚不一致。
         """
-        from .diyfig import catalog
         from . import mcmplot
-        return {**catalog(), "has_cjk_font": mcmplot.has_cjk()}
+        from .diyfig import catalog
+        return {**catalog(), **mcmplot.catalog(),
+                "has_cjk_font": mcmplot.has_cjk()}
 
     @app.post("/api/diy/render")
     def diy_render(payload: Dict[str, Any] = Body(default={})) -> Any:
@@ -595,15 +759,20 @@ def create_app(project_root: Path) -> FastAPI:
         """把 DIY 规格存成项目里的一个图模板，之后可反复用。
 
         存成**模板**而不是只存一张 PDF：同一个 DIY 图往往要在多个
-        实验上重复用，存规格才能改数据重用。落盘位置在
-        templates/figures/ 下，和其他模板平级。
+        实验上重复用，存规格才能改数据重用。
+
+        落盘位置是**用户目录** ``~/.mcmtools/templates/figures/``，
+        不是程序自带的 templates/。原因有两个，都是实际的故障：
+        程序目录在 .app 包里是只读的（写进去直接报错），
+        而且 `git pull` 会把它整个覆盖掉 —— 用户调好的图不该因为
+        一次升级就消失。自带库和用户库由 TemplateRegistry 一起加载。
         """
         import re as _re
 
         import yaml as _yaml
 
         from .diyfig import CATEGORICAL, CHART_TYPES, MATRIX_TYPES, render
-        from .templates import default_registry_root
+        from .root import core_root, user_templates_root
 
         name = (payload.get("name") or "").strip()
         if not name:
@@ -622,10 +791,13 @@ def create_app(project_root: Path) -> FastAPI:
         import matplotlib.pyplot as plt
         plt.close(fig)
 
-        kinds = {k for k, _ in CHART_TYPES}
         chart = spec.get("chart") or "line"
-        out_dir = (default_registry_root() / "figures" / f"diy_{slug}")
-        out_dir.mkdir(parents=True, exist_ok=True)
+        out_dir = (user_templates_root() / "figures" / f"diy_{slug}")
+        try:
+            out_dir.mkdir(parents=True, exist_ok=True)
+        except OSError as exc:
+            raise HTTPException(
+                422, f"写不进自定模板目录 {out_dir.parent}：{exc}")
 
         inputs = [{"name": "y", "role": "metric", "type": "array",
                    "optional": False, "description": "主数据序列"}]
@@ -663,6 +835,12 @@ def create_app(project_root: Path) -> FastAPI:
 
         # 生成的模板文件内容。用列表拼行，避免长字符串里的引号
         # 和转义互相打架 —— 这里踩过一次，整个 api.py 直接语法错误。
+        #
+        # core 路径写成**绝对路径 + 环境变量兜底**：模板现在落在
+        # ~/.mcmtools/templates/ 下，和程序目录没有固定的相对关系，
+        # 靠 '../../../core' 上溯必然指错地方（原来那份就是这么写的，
+        # 只是因为当时存在仓库里才碰巧成立）。
+        core_abs = str(core_root())
         render_src = "\n".join([
             '"""由面板 DIY 生成。要改样式就在面板里重新保存。"""',
             "from __future__ import annotations",
@@ -671,9 +849,10 @@ def create_app(project_root: Path) -> FastAPI:
             "import sys",
             "from typing import Any, Dict, Optional",
             "",
-            "sys.path.insert(0, os.path.join(",
-            "    os.path.dirname(os.path.abspath(__file__)),",
-            "    '..', '..', '..', 'core'))",
+            "# 生成时记下的 core 路径；程序被移动过就用 MCMTOOLS_HOME 重新定位。",
+            "_CORE = os.environ.get('MCMTOOLS_CORE') or " + repr(core_abs),
+            "if _CORE not in sys.path:",
+            "    sys.path.insert(0, _CORE)",
             "",
             "from mcmcore.diyfig import render as _render",
             "",
@@ -953,9 +1132,9 @@ def create_app(project_root: Path) -> FastAPI:
         tpl_defaults: Dict[str, Any] = {}
         tpl_inputs: List[Dict[str, Any]] = []
         if tpl:
-            from .templates import TemplateRegistry, default_registry_root
+            from .templates import load_registry
 
-            reg = TemplateRegistry(default_registry_root()).load_strict()
+            reg = load_registry()
             try:
                 t = reg.get(str(tpl))
             except KeyError:
@@ -1022,6 +1201,236 @@ def create_app(project_root: Path) -> FastAPI:
             # 这些默认值没有对应的模型字段，告诉用户而不是咽掉
             out["template_notes"] = ignored_defaults
         return out
+
+    # -- 代码骨架：在 app 内写程序跑数据 ----------------------------------
+    # 为什么需要这一组接口：templates/code/ 下本来就有 16 个能直接跑的
+    # 骨架（敏感性、蒙特卡洛、AHP、TOPSIS…），但要用它们必须先手写
+    # experiments/EXP-xxx/run.py、再手工把 entrypoint 填进协议 ——
+    # 而 run.py 的契约（收一个 trial 字典、返回 {"atoms": [...]}）
+    # 是新用户最容易写错的地方（见 docs/coderread.md）。
+    # 于是"有 16 个骨架"和"能跑出第一个结果"之间隔着一道坎。
+    # 这组接口把这道坎拆掉：选骨架 → 自动生成 run.py → 直接能跑。
+    @app.get("/api/snippets")
+    def list_snippets() -> List[Dict[str, Any]]:
+        """可选用的代码骨架清单（来自 templates/code/）。"""
+        reg = _registry()
+        out = []
+        for t in reg.by_kind("code"):
+            out.append({
+                "template_id": t.template_id,
+                "purpose": reg.headline(t),
+                "description": t.description,
+                "entrypoint": t.entrypoint,
+                "inputs": [{"name": i.name, "role": i.role, "type": i.type,
+                            "optional": i.optional,
+                            "description": i.description} for i in t.inputs],
+                "defaults": t.defaults,
+                "dependencies": t.dependencies,
+                # 骨架源码要能直接看到 —— "这行要改成我的"比读文档快
+                "source": _snippet_source(t),
+            })
+        return sorted(out, key=lambda x: x["template_id"])
+
+    def _snippet_source(t) -> str:
+        from .root import find_template_file
+
+        if not t.entrypoint:
+            return ""
+        # entrypoint 形如 code/ahp_evaluation/snippet.py
+        parts = t.entrypoint.split("/")
+        if len(parts) < 3:
+            return ""
+        p = find_template_file("code", parts[-2], parts[-1])
+        if p is None:
+            return ""
+        try:
+            return p.read_text(encoding="utf-8")
+        except OSError:
+            return ""
+
+    @app.post("/api/experiments/from-snippet")
+    def experiment_from_snippet(payload: Dict[str, Any] = Body(...)
+                                ) -> Dict[str, Any]:
+        """用代码骨架建一个实验，并自动写好能跑的 run.py。
+
+        生成的 run.py 不是把骨架原样拷过来 —— 骨架是**独立脚本**
+        （有 main()、自己造模拟数据、把图写到临时目录），而实验协议要的是
+        ``run(trial) -> {"atoms": [...]}``。直接拷过来会因为签名不对
+        而跑不起来，用户还得自己琢磨怎么接。
+
+        所以这里生成的是一个**适配层**：保留骨架的模型函数不改，
+        把它的输出接到结果原子上，并在文件里写清楚"要改哪几行"。
+        """
+        import re as _re
+
+        from .schemas import Experiment
+        from .templates import load_registry
+
+        st = store()
+        snippet_id = str(payload.get("snippet_id") or "").strip()
+        if not snippet_id:
+            raise HTTPException(422, "要指定用哪个代码骨架。")
+
+        reg = load_registry()
+        t = reg.get(snippet_id)
+        if t is None:
+            raise HTTPException(404, f"没有这个骨架：{snippet_id}")
+        tkind = getattr(t.kind, "value", t.kind)
+        if tkind != "code":
+            raise HTTPException(422, f"{snippet_id} 不是代码骨架（kind={tkind}）。")
+
+        # 实验编号：和 create_experiment 一样的递增规则
+        eid = str(payload.get("id") or "").strip()
+        if not eid:
+            n = len(st.list_experiments()) + 1
+            while True:
+                eid = f"EXP-{n:03d}"
+                if not st.layout.experiment_path(eid).is_file():
+                    break
+                n += 1
+        elif st.layout.experiment_path(eid).is_file():
+            raise HTTPException(409, f"实验 {eid} 已存在。")
+
+        label = str(payload.get("label") or "").strip() or \
+            (reg.headline(t) or snippet_id).split("：")[0][:40]
+
+        # 变动参数：面板填的 "名字=值,值,值" 形式，或直接给数组
+        varied = []
+        for v in (payload.get("varied") or []):
+            if not isinstance(v, dict) or not str(v.get("name") or "").strip():
+                continue
+            name = str(v["name"]).strip()
+            vals = v.get("values")
+            if isinstance(vals, str):
+                vals = [x.strip() for x in _re.split(r"[,，\s]+", vals) if x.strip()]
+                vals = [_num_or_str(x) for x in vals]
+            if not vals:
+                continue
+            varied.append({"name": name, "values": list(vals)})
+
+        entrypoint_rel = f"experiments/{eid}/run.py"
+        # trial 里实际会出现哪些键，取决于**用户声明的变动参数**，
+        # 不是骨架自己声明的输入（那两个是"骨架脚本的输入"，
+        # 跟实验协议的 trial 不是一回事）。
+        #
+        # 这里一度取的是骨架的 inputs，于是建了 w=0.1,0.5,1.0 的实验，
+        # 生成的 run.py 却教用户去读 model/base_params/sweep_spec ——
+        # 三个永远不会出现在 trial 里的键。脚本照样能跑（`.get` 有默认值），
+        # 但注释和代码说的参数是错的，用户按它改必然改错地方。
+        param_names = [v["name"] for v in varied] or \
+            [i.name for i in (t.inputs or []) if not i.optional] or ["x"]
+
+        exp = Experiment(
+            id=eid,
+            label=label,
+            kind=payload.get("kind") or "other",
+            dataset_id=payload.get("dataset_id") or None,
+            motivation=payload.get("motivation") or
+            f"由代码骨架 {snippet_id} 生成；改 run.py 里的 MODEL 段落即可。",
+            entrypoint=f"{entrypoint_rel}:run",
+            varied=[{"name": v["name"], "values": v["values"]} for v in varied],
+        )
+        st.save_experiment(exp)
+
+        script_dir = st.root / "experiments" / eid
+        script_dir.mkdir(parents=True, exist_ok=True)
+        script = _snippet_runner_source(snippet_id, reg.headline(t), param_names)
+        (script_dir / "run.py").write_text(script, encoding="utf-8")
+
+        return {
+            "experiment": exp.model_dump(by_alias=True),
+            # 键名说清是路径还是内容：叫 "script" 而给一条路径，
+            # 调用方几乎必然当成源码用（面板最初就是这么读的）。
+            "script_path": str(script_dir / "run.py"),
+            "script_source": script,
+            "script_rel": entrypoint_rel,
+            "snippet_id": snippet_id,
+            "parameter_names": param_names,
+            "findings": findings_payload(st),
+        }
+
+    @app.get("/api/experiments/{exp_id}/script")
+    def get_experiment_script(exp_id: str) -> Dict[str, Any]:
+        """读实验脚本的源码，供面板内编辑。
+
+        面板内编辑的意义：run.py 的契约容易写错，而"报错 → 看 stderr →
+        回去改"如果要在两个程序之间来回切，一轮调试就断成两截。
+        """
+        st = store()
+        try:
+            exp = st.load_experiment(exp_id)
+        except Exception:
+            raise HTTPException(404, f"没有实验 {exp_id}")
+        ep = getattr(exp, "entrypoint", None)
+        if not ep:
+            return {"experiment_id": exp_id, "path": None, "source": "",
+                    "exists": False,
+                    "hint": "这个实验还没有指定脚本。可以在下面写一个，"
+                            "然后保存 —— 保存时会自动填好 entrypoint。"}
+        rel = ep.split(":")[0]
+        path = (st.root / rel).resolve()
+        # 目录穿越防护：脚本必须落在项目目录内
+        if st.root.resolve() not in path.parents:
+            raise HTTPException(403, "脚本路径超出项目目录。")
+        if not path.is_file():
+            return {"experiment_id": exp_id, "path": str(path), "source": "",
+                    "exists": False,
+                    "hint": f"文件还不存在：{rel}。写点内容保存就会创建它。"}
+        try:
+            src = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            raise HTTPException(422, f"{rel} 不是 UTF-8 文本，没法在面板里编辑。")
+        return {"experiment_id": exp_id, "path": str(path),
+                "rel": rel, "source": src, "exists": True,
+                "entrypoint": ep}
+
+    @app.put("/api/experiments/{exp_id}/script")
+    def put_experiment_script(exp_id: str,
+                              payload: Dict[str, Any] = Body(...)
+                              ) -> Dict[str, Any]:
+        """把面板里编辑的脚本写回磁盘。
+
+        写之前先做语法检查（compile）—— 让一个语法错误的文件落盘，
+        下次运行时报的是 Python 的 SyntaxError，用户还得自己回到
+        面板里找是哪一行。这里直接拒掉并指出行号。
+        """
+        st = store()
+        try:
+            exp = st.load_experiment(exp_id)
+        except Exception:
+            raise HTTPException(404, f"没有实验 {exp_id}")
+
+        source = payload.get("source")
+        if not isinstance(source, str):
+            raise HTTPException(422, "source 要是字符串。")
+        if len(source) > 400_000:
+            raise HTTPException(422, "脚本太长了（超过 400KB）。")
+
+        rel = (getattr(exp, "entrypoint", None) or "").split(":")[0] or \
+            f"experiments/{exp_id}/run.py"
+        path = (st.root / rel).resolve()
+        if st.root.resolve() not in path.parents:
+            raise HTTPException(403, "脚本路径超出项目目录。")
+
+        # 语法预检。编译成字节码能顺带查缩进、括号、关键字拼写。
+        try:
+            compile(source, rel, "exec")
+        except SyntaxError as exc:
+            where = f"第 {exc.lineno} 行" if exc.lineno else "某处"
+            raise HTTPException(
+                422, f"语法错误（{where}）：{exc.msg}。改好再保存。")
+
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(source, encoding="utf-8")
+
+        # 原来没声明 entrypoint 的，顺手补上 —— 否则保存了也跑不起来，
+        # 用户会以为"保存没生效"。
+        if not getattr(exp, "entrypoint", None):
+            exp.entrypoint = f"{rel}:run"
+            st.save_experiment(exp)
+            return {"saved": str(path), "rel": rel, "entrypoint": exp.entrypoint,
+                    "note": f"已自动设置 entrypoint = {exp.entrypoint}"}
+        return {"saved": str(path), "rel": rel, "entrypoint": exp.entrypoint}
 
     @app.delete("/api/experiments/{exp_id}")
     def delete_experiment(exp_id: str) -> Dict[str, Any]:
@@ -1495,7 +1904,11 @@ def create_app(project_root: Path) -> FastAPI:
     # The panel is served from the same origin as the API. That is not just
     # convenient: it means the UI cannot be pointed at a different toolchain
     # than the one whose findings it displays, and there is no CORS surface.
-    web_dir = Path(__file__).resolve().parents[2] / "web"
+    # 路径统一走 root.py：.app 打包后 parents[2] 上溯不到仓库，
+    # 面板会 404 而服务"看起来正常"。
+    from .root import web_root as _web_root
+
+    web_dir = _web_root()
 
     @app.get("/", include_in_schema=False)
     def index():

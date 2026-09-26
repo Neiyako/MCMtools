@@ -125,8 +125,11 @@ class TemplateRegistry:
           paper/<name>/template.yaml
     """
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, extra_roots: Optional[List[Path]] = None) -> None:
         self.root = Path(root)
+        # 用户自定模板库（~/.mcmtools/templates）。同一 template_id 在两处
+        # 都有时**自带库胜出** —— 那是官方版本，行为可预期。
+        self.extra_roots: List[Path] = [Path(p) for p in (extra_roots or [])]
         self._templates: Dict[str, Template] = {}
         self._errors: List[str] = []
 
@@ -134,10 +137,19 @@ class TemplateRegistry:
     def load(self) -> "TemplateRegistry":
         self._templates.clear()
         self._errors.clear()
-        if not self.root.is_dir():
-            self._errors.append(f"template root does not exist: {self.root}")
-            return self
-        for path in sorted(self.root.rglob("template.yaml")):
+        # 自带库缺失是错误（"模板没了"必须报出来）；用户库缺失是正常的
+        # （还没存过任何自定模板）。
+        for i, root in enumerate([self.root, *self.extra_roots]):
+            if not root.is_dir():
+                if i == 0:
+                    self._errors.append(
+                        f"template root does not exist: {root}")
+                continue
+            self._load_one(root)
+        return self
+
+    def _load_one(self, root: Path) -> None:
+        for path in sorted(root.rglob("template.yaml")):
             try:
                 data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
                 tmpl = Template(**data)
@@ -145,12 +157,14 @@ class TemplateRegistry:
                 self._errors.append(f"{path}: {type(exc).__name__}: {exc}")
                 continue
             if tmpl.template_id in self._templates:
-                self._errors.append(
-                    f"{path}: duplicate template_id '{tmpl.template_id}'"
-                )
+                # 自带库里的重复仍是错误；自带库和用户库撞名则以自带为准，
+                # 静默跳过即可 —— 用户重新存一次同名图不该让启动失败。
+                if root == self.root:
+                    self._errors.append(
+                        f"{path}: duplicate template_id '{tmpl.template_id}'"
+                    )
                 continue
             self._templates[tmpl.template_id] = tmpl
-        return self
 
     def load_strict(self) -> "TemplateRegistry":
         """加载并**在有任何模板失败时抛错**。
@@ -363,11 +377,26 @@ class TemplateRegistry:
 
 
 def default_registry_root() -> Path:
-    """Locate the bundled templates/ directory."""
-    here = Path(__file__).resolve()
-    # core/mcmcore/templates.py -> repo root is two levels up from mcmcore
-    for parent in here.parents:
-        candidate = parent / "templates"
-        if candidate.is_dir():
-            return candidate
-    return here.parents[2] / "templates"
+    """Locate the bundled templates/ directory.
+
+    路径解析统一走 ``root.py``。原来这里是"从本文件往上找第一个叫
+    templates 的目录"—— 会被任何同名文件夹骗到（项目目录里恰好有个
+    ``templates/`` 就命中那里，模板少一半而服务照常启动、照常响应）。
+    """
+    from .root import templates_root
+
+    return templates_root()
+
+
+def registry_roots() -> List[Path]:
+    """模板库的全部根目录：自带的在前，用户自定的在后。"""
+    from .root import template_roots
+
+    return template_roots()
+
+
+def load_registry(strict: bool = True) -> "TemplateRegistry":
+    """加载全部模板根。生产和测试都该走这里，而不是手搓 Registry。"""
+    reg = TemplateRegistry(default_registry_root(),
+                           extra_roots=registry_roots()[1:])
+    return reg.load_strict() if strict else reg.load()

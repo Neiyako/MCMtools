@@ -478,36 +478,45 @@ def render(spec: Dict[str, Any], meta: Optional[Dict[str, Any]] = None):
                 f"第 {i + 1} 个序列：误差有 {len(ev)} 个，数据有 {len(yv)} 个，"
                 "必须一样多。")
 
+        # 逐序列样式覆盖。配色只能在这里生效 —— 线的颜色在 plot()
+        # 那一刻就定死了，事后遍历 axes 拿不到"这个元素该用什么颜色"。
+        # 线型/标记/线宽同理：画的时候给最省事，也最不容易错。
+        c = str(s.get("color") or c)
+        sty = _series_style(s, i)
+
         if chart == "line":
-            ax.plot(xv, yv, "-", color=c, lw=1.9, label=nm)
+            ax.plot(xv, yv, sty["ls"], color=c, lw=sty["lw"], label=nm,
+                    alpha=sty["alpha"])
         elif chart == "line_markers":
-            ax.plot(xv, yv, LINESTYLES[i % len(LINESTYLES)],
-                    marker=MARKERS[i % len(MARKERS)], ms=5, color=c,
-                    lw=1.7, markeredgecolor="white", markeredgewidth=0.8,
-                    label=nm)
+            ax.plot(xv, yv, sty["ls"], marker=sty["marker"], ms=sty["ms"],
+                    color=c, lw=sty["lw"], markeredgecolor="white",
+                    markeredgewidth=0.8, label=nm, alpha=sty["alpha"])
         elif chart == "scatter":
-            ax.scatter(xv, yv, s=34, color=c, alpha=0.8,
+            ax.scatter(xv, yv, s=sty["ms"] ** 2, color=c, alpha=sty["alpha"],
                        edgecolor="white", lw=0.7, label=nm, zorder=3)
         elif chart == "step":
-            ax.step(xv, yv, where="mid", color=c, lw=1.8, label=nm)
+            ax.step(xv, yv, where="mid", color=c, lw=sty["lw"], label=nm,
+                    alpha=sty["alpha"])
         elif chart == "stem":
-            ml, sl, bl = ax.stem(xv, yv, linefmt="-", markerfmt="o",
+            ml, sl, bl = ax.stem(xv, yv, linefmt="-", markerfmt=sty["marker"],
                                  basefmt=" ")
-            plt.setp(sl, color=c, lw=1.6)
-            plt.setp(ml, color=c, ms=5)
+            plt.setp(sl, color=c, lw=sty["lw"], alpha=sty["alpha"])
+            plt.setp(ml, color=c, ms=sty["ms"], alpha=sty["alpha"])
             plt.setp(bl, visible=False)
             ml.set_label(nm)
         elif chart == "area":
-            ax.fill_between(xv, 0, yv, color=c, alpha=0.35, label=nm)
-            ax.plot(xv, yv, "-", color=c, lw=1.8)
+            ax.fill_between(xv, 0, yv, color=c, alpha=sty["alpha"] * 0.35,
+                            label=nm)
+            ax.plot(xv, yv, sty["ls"], color=c, lw=sty["lw"])
         elif chart == "area_stacked":
             # 堆叠要所有序列共用横轴，先攒起来统一画
             pass
         elif chart == "errorbar":
             if not ev:
                 raise DIYError("误差棒图需要 errors：每个点的不确定度。")
-            ax.errorbar(xv, yv, yerr=ev, fmt="-o", color=c, lw=1.7, ms=4.5,
-                        capsize=3, label=nm)
+            ax.errorbar(xv, yv, yerr=ev, fmt="-" + sty["marker"], color=c,
+                        lw=sty["lw"], ms=sty["ms"], capsize=3, label=nm,
+                        alpha=sty["alpha"])
         elif chart == "fill_between":
             if not ev:
                 raise DIYError("误差带图需要 errors：每个点的不确定度。")
@@ -560,28 +569,102 @@ def render(spec: Dict[str, Any], meta: Optional[Dict[str, Any]] = None):
 
 def _finish(fig, ax, safe, title, xlabel, ylabel, caption,
             show_grid, spec) -> None:
-    """统一的收尾：标题、轴标签、网格、题注。"""
+    """统一的收尾：标题、轴标签、网格、题注、以及轴与刻度的微调。"""
+    # 轴与刻度的局部微调从 spec 读；没给就用原来的默认值。
+    # 放在这里而不是每个分支里各写一遍 —— 有 27 种图型，
+    # 逐个改迟早漏掉几个，而漏掉的那个看起来就像"这个旋钮没用"。
+    spec = spec or {}
+    ts = _opt_float(spec, "title_size", 11.0)
+    ls = _opt_float(spec, "label_size", 9.5)
+    fs = _opt_float(spec, "tick_size", None)
+    ga = _opt_float(spec, "grid_alpha", 0.28)
+
     if title:
-        ax.set_title(safe(title), fontsize=11)
+        ax.set_title(safe(title), fontsize=ts)
     if xlabel:
-        ax.set_xlabel(safe(xlabel), fontsize=9.5)
+        ax.set_xlabel(safe(xlabel), fontsize=ls)
     if ylabel:
-        ax.set_ylabel(safe(ylabel), fontsize=9.5)
+        ax.set_ylabel(safe(ylabel), fontsize=ls)
     if show_grid:
-        ax.grid(alpha=0.28, lw=0.6)
+        ax.grid(alpha=ga, lw=0.6)
         ax.set_axisbelow(True)
+    if fs:
+        try:
+            for lbl in ax.get_xticklabels() + ax.get_yticklabels():
+                lbl.set_fontsize(fs)
+        except Exception:  # noqa: BLE001
+            pass
+
+    rot = _opt_float(spec, "xtick_rot", None)
+    if rot:
+        try:
+            for lbl in ax.get_xticklabels():
+                lbl.set_rotation(rot)
+                lbl.set_ha("right")
+        except Exception:  # noqa: BLE001
+            pass
+
+    # 图例位置与字号：图例在哪是论文排版里常见的返工点，而 matplotlib
+    # 默认的 "best" 有时正好压在数据上。
+    loc = (spec.get("legend_loc") or "").strip()
+    size = _opt_float(spec, "legend_size", None)
+    if ax.get_legend() is not None and (loc or size):
+        try:
+            ax.legend(loc="center left" if loc == "outside right"
+                      else (loc or "best"),
+                      fontsize=size or 8.0)
+        except Exception:  # noqa: BLE001
+            pass
+
     # 题注放图下：论文里图题是排版的活，但预览时要能看见自己写了什么
     if caption:
         fig.text(0.5, 0.005, safe(caption), ha="center", va="bottom",
-                 fontsize=8, color="#555", wrap=True)
+                 fontsize=max(6.0, (fs or 8.0)) if fs else 8,
+                 color="#555", wrap=True)
     try:
         fig.tight_layout()
     except Exception:  # noqa: BLE001  极坐标/3D 有时会拒绝 tight_layout
         pass
 
 
+def _series_style(s: Dict[str, Any], i: int) -> Dict[str, Any]:
+    """一个序列的绘制样式，缺省值按序号轮换。
+
+    按序号轮换而不是全用同一个默认值：多序列图里两条线如果线型和标记
+    都一样、只有颜色不同，打印成黑白就分不出来了 —— 而论文经常黑白印刷。
+    轮换是"什么都不改也能用"的默认。
+    """
+    def _f(key, default):
+        v = s.get(key)
+        if v is None or v == "":
+            return default
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return default
+
+    return {
+        "ls": str(s.get("linestyle") or LINESTYLES[i % len(LINESTYLES)]),
+        "marker": str(s.get("marker") or MARKERS[i % len(MARKERS)]),
+        "lw": _f("line_width", 1.9),
+        "ms": _f("marker_size", 5.0),
+        "alpha": max(0.0, min(1.0, _f("alpha", 1.0))),
+    }
+
+
+def _opt_float(spec: Dict[str, Any], key: str, default):
+    """取一个可选的数值选项。取不到就返回 default（可能是 None）。"""
+    v = (spec or {}).get(key)
+    if v is None or v == "":
+        return default
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
 def catalog() -> Dict[str, Any]:
-    """给面板的选项清单：图形类型、配色、说明。
+    """给面板的选项清单：图形类型、配色、线型、标记。
 
     前端不该硬编码这些 —— 加一种图要同时改两处，早晚不一致。
     """
@@ -589,4 +672,15 @@ def catalog() -> Dict[str, Any]:
         "chart_types": [{"value": k, "label": v} for k, v in CHART_TYPES],
         "palettes": [{"value": k, "colors": v} for k, v in PALETTES.items()],
         "markers": MARKERS,
+        "linestyles": LINESTYLES,
+        # 逐序列可覆盖的键。面板按它渲染"每个序列一行"的微调控件；
+        # 键名是前后端之间的约定，所以由后端给出去，不写死在前端。
+        "series_style_keys": [
+            {"key": "color", "label": "颜色", "type": "color"},
+            {"key": "linestyle", "label": "线型", "type": "linestyle"},
+            {"key": "marker", "label": "标记", "type": "marker"},
+            {"key": "line_width", "label": "线宽", "type": "float"},
+            {"key": "marker_size", "label": "标记大小", "type": "float"},
+            {"key": "alpha", "label": "透明度", "type": "float"},
+        ],
     }

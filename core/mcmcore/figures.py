@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .schemas import ArtifactStatus, Figure, ResultAtom
-from .templates import default_registry_root
+from .root import find_template_file, templates_root
 from .store import Store
 
 
@@ -140,7 +140,9 @@ class FigureGenerator:
         import importlib.util
 
         name = template_id.split(".")[-1]          # fig.bar_comparison -> bar_comparison
-        path = default_registry_root() / "figures" / name / "render.py"
+        path = find_template_file("figures", name, "render.py")
+        if path is None:
+            return None
         if not path.is_file():
             return None
         mod_name = f"mcmfig_{name}"
@@ -363,8 +365,8 @@ class FigureGenerator:
         import yaml
 
         name = template_id.split(".")[-1]
-        spec = default_registry_root() / "figures" / name / "template.yaml"
-        if not spec.is_file():
+        spec = find_template_file("figures", name, "template.yaml")
+        if spec is None:
             return []
         try:
             declared = yaml.safe_load(spec.read_text(encoding="utf-8")) or {}
@@ -382,8 +384,8 @@ class FigureGenerator:
         import yaml
 
         name = template_id.split(".")[-1]
-        spec = default_registry_root() / "figures" / name / "template.yaml"
-        if not spec.is_file():
+        spec = find_template_file("figures", name, "template.yaml")
+        if spec is None:
             return data
         try:
             declared = yaml.safe_load(spec.read_text(encoding="utf-8")) or {}
@@ -494,7 +496,7 @@ class FigureGenerator:
         """加载共享绘图设置（中文字体等）。"""
         import importlib.util
 
-        path = default_registry_root() / "figures" / "mcmplot.py"
+        path = templates_root() / "figures" / "mcmplot.py"
         if not path.is_file():
             return None
         if "mcmplot" in sys.modules:

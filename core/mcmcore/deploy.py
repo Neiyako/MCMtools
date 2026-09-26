@@ -107,7 +107,9 @@ def _count_templates(reg_root: Path) -> Tuple[int, dict]:
 def inspect(root: Optional[Path] = None) -> Report:
     """检查这个目录能不能直接部署。"""
     if root is None:
-        root = Path(__file__).resolve().parents[2]
+        from mcmcore.root import repo_root
+
+        root = repo_root()
     root = Path(root).resolve()
     rep = Report(root=root)
 
@@ -173,10 +175,9 @@ def inspect(root: Optional[Path] = None) -> Report:
     # 数完数还要真的加载一遍：文件在但内容坏了，数数是发现不了的。
     try:
         sys.path.insert(0, str(root / "core"))
-        from mcmcore.templates import (TemplateLoadError, TemplateRegistry,
-                                       default_registry_root)
+        from mcmcore.templates import TemplateLoadError, load_registry
 
-        reg = TemplateRegistry(default_registry_root()).load()
+        reg = load_registry(strict=False)
         if reg._errors:
             rep.findings.append(Finding(
                 "fail", "有模板加载失败",

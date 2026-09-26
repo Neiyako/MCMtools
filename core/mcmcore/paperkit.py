@@ -30,15 +30,15 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from .schemas import Paper, PaperSection, SectionKind
-from .templates import default_registry_root
+from .root import find_template_file
 
 PLACEHOLDER_RE = re.compile(r"\{\{([a-zA-Z0-9_]+)\}\}")
 
 
 def _load_template(name: str) -> Optional[Dict[str, Any]]:
     """读 templates/paper/<name>/template.yaml。"""
-    path = default_registry_root() / "paper" / name / "template.yaml"
-    if not path.is_file():
+    path = find_template_file("paper", name, "template.yaml")
+    if path is None:
         return None
     try:
         return yaml.safe_load(path.read_text(encoding="utf-8")) or {}
@@ -64,7 +64,7 @@ SPINE_TEMPLATES = {
 def available_spines() -> List[str]:
     """有哪些章节骨架可用（只列真的存在模板文件的）。"""
     return [name for name, tmpl in SPINE_TEMPLATES.items()
-            if (default_registry_root() / "paper" / tmpl / "template.yaml").is_file()]
+            if find_template_file("paper", tmpl, "template.yaml") is not None]
 
 
 def load_spine(kind: str = "general") -> List[Dict[str, Any]]:

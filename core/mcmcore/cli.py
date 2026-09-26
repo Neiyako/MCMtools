@@ -30,7 +30,7 @@ from .runner import ExperimentRunner, stale_artifacts
 from .runstore import RunStore
 from .store import Store
 from .templates import TEMPLATE_KINDS
-from .templates import TemplateRegistry, default_registry_root
+from .templates import TemplateRegistry, load_registry
 from .validate import audit_project
 
 
@@ -39,7 +39,7 @@ def _default_root(args: argparse.Namespace) -> Path:
 
 
 def _registry() -> TemplateRegistry:
-    return TemplateRegistry(default_registry_root()).load_strict()
+    return load_registry()
 
 
 def _fmt_table(headers: List[str], rows: List[List[str]]) -> str:

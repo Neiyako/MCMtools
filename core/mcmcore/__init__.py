@@ -30,7 +30,11 @@ def git_revision(short: bool = True) -> Optional[str]:
     """
     import subprocess
 
-    root = Path(__file__).resolve().parents[2]
+    # 走统一的路径解析：.app 打包后本文件可能在只读的 Resources/ 下，
+    # parents[2] 指不到仓库，版本号会静默变成 None。
+    from .root import repo_root
+
+    root = repo_root()
     try:
         out = subprocess.run(
             ["git", "rev-parse", "--short" if short else "HEAD", "HEAD"],

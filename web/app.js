@@ -155,6 +155,18 @@ function go(route) {
 }
 
 // ---------------------------------------------------------------- 屏幕
+/** 当前这次渲染的序号。每次 renderScreen 递增。
+ *
+ * 为什么需要它：屏幕函数是异步的，而**两次渲染可能重叠**。启动时的
+ * boot() 会按 URL 的 hash 渲染一次，用户（或测试）立刻再点一次同一个
+ * 导航项就又渲染一次。后发的那次先写完 innerHTML，先发的那次随后
+ * 才回来 —— 于是用户看到的是旧屏幕，或者停在"正在加载…"。
+ *
+ * 屏幕函数里的 await 越多，这个窗口越大。所以每次渲染领一个号，
+ * 回来时号对不上就丢弃自己那次的结果，谁也别覆盖谁。
+ */
+let RENDER_SEQ = 0;
+
 async function renderScreen() {
   const fn = {
     overview: screenOverview,
@@ -173,10 +185,12 @@ async function renderScreen() {
     settings: screenSettings,
   }[ROUTE];
   const content = $('#content');
+  const seq = ++RENDER_SEQ;
   content.innerHTML = `<div class="empty">${T.loading}</div>`;
   try {
     await fn(content);
   } catch (err) {
+    if (seq !== RENDER_SEQ) return;   // 已经有更新的一次渲染接手了
     content.innerHTML = `<div class="error-box">
       <strong>${T.loadFailed}</strong>
       <p>${esc(err.message)}</p></div>`;
@@ -300,11 +314,13 @@ async function paintData(root) {
     </div>
 
     <div class="card">
-      <h2>${T.data.importTitle}</h2>
-      <div class="muted small">${T.data.importHint}</div>
+      <h2>${T.data.fromDisk}</h2>
+      <div class="muted small">${T.data.fromDiskHint}</div>
       <div id="ds-form">${fieldEditor(DATASET_FIELDS, {})}</div>
       <div class="btn-row">
         <button class="btn btn-primary" id="ds-import">${T.data.importBtn}</button>
+        <button class="btn" id="ds-browse">${T.data.importTitle}</button>
+        <input type="file" id="ds-file" accept=".csv,.tsv,.txt" hidden>
       </div>
       <div id="ds-msg" class="small" hidden></div>
     </div>`;
@@ -314,6 +330,22 @@ async function paintData(root) {
     el.hidden = false;
     el.className = ok ? 'success-box small' : 'error-box small';
     el.textContent = text;
+  };
+
+  // 浏览器不让页面拿到所选文件的真实路径（安全限制），所以文件选择器
+  // 只能给出文件名。这里把 data/<名字> 填进输入框并提示怎么补全 ——
+  // 比让用户对着空框猜该写什么格式好。
+  const fileInput = root.querySelector('#ds-file');
+  root.querySelector('#ds-browse').onclick = () => fileInput.click();
+  fileInput.onchange = () => {
+    const f = fileInput.files && fileInput.files[0];
+    if (!f) return;
+    const box = root.querySelector('#ds-form input');
+    if (box) {
+      box.value = `data/${f.name}`;
+      box.focus();
+      msg(`已填入 data/${f.name}。文件不在项目的 data/ 下时，改成完整路径。`, true);
+    }
   };
 
   root.querySelector('#ds-import').onclick = async () => {
@@ -346,7 +378,7 @@ async function paintData(root) {
 
 const DATASET_FIELDS = [
   { key: 'path', label: T.data.fPath, required: true,
-    placeholder: '/path/to/data.csv', hint: T.data.fPathHint },
+    placeholder: T.data.pathPh, hint: T.data.fPathHint },
   { key: 'name', label: T.data.fName, placeholder: T.data.fNamePh },
   { key: 'kind', label: T.data.fKind, type: 'select', options: [
     { value: 'competition_provided', label: T.data.kComp },
@@ -817,8 +849,10 @@ async function paintExperiments(root) {
             T.experiments.createBtn}</button>
         </div>
         <div id="exp-msg" class="small" hidden></div>
-      </div>`;
+      </div>
+      <div id="snippet-slot"></div>`;
     await wireExperimentForm(root);
+    await wireSnippets(root);
     return;
   }
 
@@ -850,10 +884,12 @@ async function paintExperiments(root) {
       <div class="row-actions">
         <button data-run="${esc(e.id)}">${T.experiments.run}</button>
         <button data-trials="${esc(e.id)}" class="ghost">${T.experiments.trials}</button>
+        <button data-script="${esc(e.id)}" class="ghost">${T.script.title}</button>
       </div>
     </div>`;
   });
   root.innerHTML = `<div class="grid grid-3">${cards.join('')}</div>
+    <div id="script-slot"></div>
     <div class="card">
       <h2>${T.experiments.newTitle}</h2>
       <div class="muted small">${T.experiments.newHint}</div>
@@ -866,7 +902,8 @@ async function paintExperiments(root) {
           T.experiments.createBtn}</button>
       </div>
       <div id="exp-msg" class="small" hidden></div>
-    </div>`;
+    </div>
+    <div id="snippet-slot"></div>`;
   // 先把「运行」按钮接上，再装新建表单。
   // 新建表单要异步拉模板列表，万一失败，不能连累已有实验的运行按钮 ——
   // 表单抛错时，运行按钮会全变成摆设。
@@ -896,9 +933,221 @@ async function paintExperiments(root) {
         `<li><code>${esc(t.condition)}</code></li>`).join('')}</ol>`);
   });
 
-  // 最后装新建表单。它要异步拉模板列表，慢一点、甚至失败，
+  // 打开某个实验的脚本编辑器。放在实验卡片上而不是单独一页：
+  // "跑失败了 → 看 stderr → 改脚本 → 再跑"是一条链，中间跳页就断了。
+  root.querySelectorAll('[data-script]').forEach(b => b.onclick = () => {
+    openScriptEditor(root, b.getAttribute('data-script'));
+  });
+
+  // 最后装新建表单和骨架面板。它们要异步拉数据，慢一点、甚至失败，
   // 都不该影响上面那些已经接好的按钮。
   await wireExperimentForm(root);
+  await wireSnippets(root);
+}
+
+/** 代码骨架面板：选一个骨架直接生成能跑的实验脚本。
+ *
+ * templates/code/ 下本来就有 16 个能跑的骨架，但要用它们得先手写
+ * experiments/EXP-xxx/run.py 并把 entrypoint 填进协议 —— 而 run.py 的
+ * 契约正是最容易写错的地方。于是"有骨架"和"跑出第一个结果"之间
+ * 隔着一道坎。这一块把坎拆掉。
+ */
+async function wireSnippets(root) {
+  const slot = root.querySelector('#snippet-slot');
+  if (!slot) return;
+  let items;
+  try {
+    items = await api('/api/snippets');
+  } catch {
+    return;   // 拉不到就不显示，不影响页面其余部分
+  }
+  if (!Array.isArray(items) || !items.length) return;
+
+  slot.innerHTML = `
+    <div class="card">
+      <h2>${T.snippets.title} <span class="muted">（${items.length}）</span></h2>
+      <div class="muted small">${T.snippets.sub}</div>
+      <div class="field">
+        <label>${T.snippets.pick}</label>
+        <select class="select" id="sn-pick">
+          ${items.map(t => `<option value="${esc(t.template_id)}">${
+            esc(t.template_id)} — ${esc(String(t.purpose || '').slice(0, 52))}</option>`).join('')}
+        </select>
+      </div>
+      <div id="sn-info" class="muted small"></div>
+      <div class="field-row">
+        <div class="field"><label>${T.snippets.nameLabel}</label>
+          <input class="input" id="sn-name" placeholder="${esc(T.snippets.namePh)}"></div>
+        <div class="field"><label>${T.snippets.variedLabel}</label>
+          <input class="input" id="sn-varied" placeholder="w=0.1,0.5,1.0"></div>
+      </div>
+      <div class="muted small">${T.snippets.variedHint}</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="sn-create">${T.snippets.create}</button>
+        <button class="btn" id="sn-view">${T.snippets.viewSource}</button>
+      </div>
+      <div id="sn-msg" class="small" hidden></div>
+    </div>`;
+
+  const pick = root.querySelector('#sn-pick');
+  const info = root.querySelector('#sn-info');
+  const msg = (t, ok) => {
+    const el = root.querySelector('#sn-msg');
+    el.hidden = false;
+    el.className = ok ? 'success-box small' : 'error-box small';
+    el.textContent = t;
+  };
+  const current = () => items.find(x => x.template_id === pick.value) || items[0];
+
+  function showInfo() {
+    const t = current();
+    const req = (t.inputs || []).filter(i => !i.optional).map(i => i.name);
+    const deps = (t.dependencies || []).join('、');
+    info.innerHTML = `
+      <div><b>${T.snippets.inputs}</b>：${
+        req.map(n => `<code class="req">${esc(n)}</code>`).join(' ') || '无'}</div>
+      ${deps ? `<div><b>${T.snippets.deps}</b>：${esc(deps)}</div>` : ''}`;
+  }
+  pick.onchange = showInfo;
+  showInfo();
+
+  root.querySelector('#sn-view').onclick = () => {
+    const t = current();
+    openModal(`<h2>${esc(t.template_id)}</h2>
+      <p class="muted small">${esc(t.purpose || '')}</p>
+      <pre class="code-block" style="max-height:60vh;overflow:auto">${
+        esc(t.source || '')}</pre>
+      <div class="btn-row"><button class="btn" id="modal-cancel">${
+        T.cancel}</button></div>`);
+    const c = document.querySelector('#modal-cancel');
+    if (c) c.onclick = () => { document.querySelector('#modal').hidden = true; };
+  };
+
+  root.querySelector('#sn-create').onclick = async () => {
+    root.querySelector('#sn-msg').hidden = true;
+    const body = { snippet_id: pick.value };
+    const name = root.querySelector('#sn-name').value.trim();
+    if (name) body.label = name;
+    const rawV = root.querySelector('#sn-varied').value.trim();
+    if (rawV) {
+      // 一行一个变动轴：名字=值,值,值
+      const varied = rawV.split(/\n+/).map(line => {
+        const [n, vals] = line.split('=');
+        if (!n || !vals) return null;
+        return { name: n.trim(), values: vals.trim() };
+      }).filter(Boolean);
+      if (varied.length) body.varied = varied;
+    }
+    try {
+      const r = await api('/api/experiments/from-snippet', {
+        method: 'POST', body: JSON.stringify(body),
+      });
+      toast(T.snippets.created(r.experiment.id), 'ok');
+      await paintExperiments(root);
+      openScriptEditor(root, r.experiment.id);
+    } catch (e) {
+      msg(`${T.snippets.createFailed}${e.message || e}`, false);
+    }
+  };
+}
+
+/** 实验脚本的页内编辑器。
+ *
+ * 为什么值得做：run.py 的契约（收一个 trial、返回 {"atoms": [...]}）
+ * 是最容易写错的一处，而"运行失败 → 看 stderr → 回去改"如果要在
+ * 编辑器和浏览器之间来回切，一轮调试就被切成两半。
+ */
+async function openScriptEditor(root, expId) {
+  const slot = root.querySelector('#script-slot');
+  if (!slot) return;
+  let d;
+  try {
+    d = await api(`/api/experiments/${encodeURIComponent(expId)}/script`);
+  } catch (e) {
+    slot.innerHTML = `<div class="card"><div class="error-box small">${
+      esc(T.script.loadFailed)}${esc(e.message || e)}</div></div>`;
+    return;
+  }
+
+  slot.innerHTML = `
+    <div class="card" id="script-card">
+      <h2>${T.script.title} <span class="muted">${esc(expId)}</span></h2>
+      <div class="script-bar">
+        <span class="script-meta">${d.rel ? esc(T.script.file) + ': ' + esc(d.rel) : ''}</span>
+        <span class="muted small" id="sc-lines"></span>
+      </div>
+      ${!d.exists && d.hint ? `<div class="warn-box small">${esc(d.hint)}</div>` : ''}
+      <textarea id="sc-src" class="script-area" spellcheck="false"
+        wrap="off">${esc(d.source || '')}</textarea>
+      <div class="muted small">${T.script.hint}</div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="sc-save">${T.script.save}</button>
+        <button class="btn" id="sc-run">${T.script.run}</button>
+        <button class="btn btn-mini" id="sc-close">${T.cancel}</button>
+      </div>
+      <div id="sc-msg" class="small" hidden></div>
+    </div>`;
+
+  const ta = slot.querySelector('#sc-src');
+  const msg = (t, ok) => {
+    const el = slot.querySelector('#sc-msg');
+    el.hidden = false;
+    el.className = ok ? 'success-box small' : 'error-box small';
+    el.textContent = t;
+  };
+  const countLines = () => {
+    slot.querySelector('#sc-lines').textContent =
+      T.script.lines(ta.value.split('\n').length);
+  };
+  countLines();
+  ta.addEventListener('input', countLines);
+  // Tab 键在文本框里默认是切焦点，写 Python 时会误跳走 —— 缩进是
+  // Python 的语法，所以这里让它插入空格。
+  ta.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    e.preventDefault();
+    const s = ta.selectionStart, t = ta.selectionEnd;
+    ta.value = ta.value.slice(0, s) + '    ' + ta.value.slice(t);
+    ta.selectionStart = ta.selectionEnd = s + 4;
+    countLines();
+  });
+
+  const save = async () => {
+    const r = await api(`/api/experiments/${encodeURIComponent(expId)}/script`, {
+      method: 'PUT', body: JSON.stringify({ source: ta.value }),
+    });
+    msg(T.script.saved(r.rel || ''), true);
+    return r;
+  };
+
+  slot.querySelector('#sc-save').onclick = async () => {
+    try { await save(); }
+    catch (e) { msg(`${T.script.saveFailed}${e.message || e}`, false); }
+  };
+  slot.querySelector('#sc-run').onclick = async () => {
+    try { await save(); }
+    catch (e) { msg(`${T.script.saveFailed}${e.message || e}`, false); return; }
+    try {
+      const res = await api(`/api/experiments/${encodeURIComponent(expId)}/run`, {
+        method: 'POST', body: JSON.stringify({}),
+      });
+      const stale = (res.stale.figures.length + res.stale.tables.length);
+      msg(`${T.script.runStarted} ${
+        T.experiments.runDone(expId, res.runs.length,
+                              res.changed_atoms.length, stale)}`, true);
+      await refresh();
+    } catch (e) {
+      // 运行失败里带着 traceback —— 原样显示，不要截断，
+      // 用户就是靠它定位哪一行出的问题。
+      msg(`${T.script.runFailed}${e.message || e}`, false);
+    }
+  };
+  slot.querySelector('#sc-close').onclick = () => { slot.innerHTML = ''; };
+  // scrollIntoView 不是所有环境都有（测试用的 jsdom 就没有），
+  // 而它只是一个锦上添花的滚动 —— 不该让整页渲染挂在它上面。
+  if (typeof slot.scrollIntoView === 'function') {
+    slot.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
 
 /** 实验类型。与后端 ExperimentKind 保持一致。 */
@@ -1166,7 +1415,48 @@ async function screenDiy(root) {
         </div>
         <div class="field"><label>${T.diy.captionLabel}</label>
           <input id="diy-caption" class="input" placeholder="${esc(T.diy.captionPh)}"></div>
+      </div>
 
+      <div class="card diy-form">
+        <h2>${T.diy.axisSection}</h2>
+        <div class="style-grid">
+          <div class="field"><label>${T.diy.titleSize}</label>
+            <input id="diy-title-size" class="input" type="number" step="0.5" placeholder="11"></div>
+          <div class="field"><label>${T.diy.labelSize}</label>
+            <input id="diy-label-size" class="input" type="number" step="0.5" placeholder="9.5"></div>
+          <div class="field"><label>${T.diy.tickSize}</label>
+            <input id="diy-tick-size" class="input" type="number" step="0.5" placeholder="自动"></div>
+          <div class="field"><label>${T.diy.legendSize}</label>
+            <input id="diy-legend-size" class="input" type="number" step="0.5" placeholder="8"></div>
+          <div class="field"><label>${T.diy.legendPos}</label>
+            <select id="diy-legend-loc" class="input">
+              <option value="">不改</option>
+            </select></div>
+          <div class="field"><label>网格透明度</label>
+            <input id="diy-grid-alpha" class="input" type="number" step="0.05" placeholder="0.28"></div>
+          <div class="field"><label>横轴范围起</label>
+            <input id="diy-xlim-min" class="input" type="number" step="any" placeholder="自动"></div>
+          <div class="field"><label>横轴范围止</label>
+            <input id="diy-xlim-max" class="input" type="number" step="any" placeholder="自动"></div>
+          <div class="field"><label>纵轴范围起</label>
+            <input id="diy-ylim-min" class="input" type="number" step="any" placeholder="自动"></div>
+          <div class="field"><label>纵轴范围止</label>
+            <input id="diy-ylim-max" class="input" type="number" step="any" placeholder="自动"></div>
+          <div class="field"><label>横轴刻度旋转</label>
+            <input id="diy-xtick-rot" class="input" type="number" step="15" placeholder="0"></div>
+        </div>
+      </div>
+
+      <div class="card diy-form">
+        <div class="style-head">
+          <h2>${T.diy.styleSection}</h2>
+          <button class="btn btn-mini" id="diy-style-reset">${T.diy.resetStyle}</button>
+        </div>
+        <div class="muted small">${T.diy.styleHint}</div>
+        <div id="diy-series-style"></div>
+      </div>
+
+      <div class="card diy-form">
         <div class="btn-row">
           <button class="btn btn-primary" id="diy-draw">${T.diy.draw}</button>
           <button class="btn" id="diy-save">${T.diy.saveAsTemplate}</button>
@@ -1191,6 +1481,101 @@ async function screenDiy(root) {
 
   const $d = (id) => root.querySelector('#diy-' + id);
 
+  // 图例位置下拉：选项由后端给（LEGEND_LOCS 在后端是唯一真源）。
+  {
+    const sel = $d('legend-loc');
+    if (sel) {
+      (opts.legend_locs || []).forEach(v => {
+        const o = document.createElement('option');
+        o.value = v; o.textContent = v;
+        sel.appendChild(o);
+      });
+    }
+  }
+
+  /** 逐序列微调控件。鼠标不动、不重画，只有按「画出来」才生效 ——
+   *  每敲一个键就重画一张 PDF 太慢，而且后端渲染不便宜。 */
+  const seriesStyle = {};
+  function renderSeriesStyles() {
+    const box = $d('series-style');
+    if (!box) return;
+    let list = [];
+    try {
+      list = JSON.parse($d('series').value);
+      if (!Array.isArray(list)) list = [];
+    } catch { list = []; }
+    if (!list.length) {
+      box.innerHTML = `<div class="muted small">先在上面填多序列数据，
+        这里就会按序列列出可调的样式。</div>`;
+      return;
+    }
+    box.innerHTML = list.map((sr, i) => {
+      const st = seriesStyle[i] || {};
+      return `<div class="series-style-row" data-si="${i}">
+        <span class="muted">${esc(T.diy.series(i + 1))}</span>
+        <input type="color" data-sk="color" value="${esc(st.color || '#1f4e79')}"
+          title="${T.diy.styleSection}">
+        <select class="input" data-sk="linestyle">
+          <option value="">线型自动</option>
+          ${(opts.linestyles || []).map(ls =>
+            `<option value="${esc(ls)}"${st.linestyle === ls ? ' selected' : ''}>${
+              esc(ls)}</option>`).join('')}
+        </select>
+        <select class="input" data-sk="marker">
+          <option value="">标记自动</option>
+          ${(opts.markers || []).map(m =>
+            `<option value="${esc(m)}"${st.marker === m ? ' selected' : ''}>${
+              esc(m)}</option>`).join('')}
+        </select>
+        <input class="input" data-sk="line_width" type="number" step="0.1"
+          placeholder="线宽" value="${st.line_width != null ? esc(String(st.line_width)) : ''}">
+        <input class="input" data-sk="alpha" type="number" step="0.05"
+          placeholder="透明" value="${st.alpha != null ? esc(String(st.alpha)) : ''}">
+      </div>`;
+    }).join('');
+    box.querySelectorAll('[data-sk]').forEach(el => {
+      el.onchange = () => {
+        const row = el.closest('[data-si]');
+        const i = Number(row.getAttribute('data-si'));
+        const k = el.getAttribute('data-sk');
+        const v = String(el.value || '').trim();
+        seriesStyle[i] = seriesStyle[i] || {};
+        if (v === '') delete seriesStyle[i][k];
+        else if (k === 'color' || k === 'linestyle' || k === 'marker') {
+          seriesStyle[i][k] = v;
+        } else {
+          const n = Number(v);
+          if (Number.isFinite(n)) seriesStyle[i][k] = n;
+          else delete seriesStyle[i][k];
+        }
+        // 只把样式并进 JSON 里的对应序列，数据本身不动
+        try {
+          const list2 = JSON.parse($d('series').value);
+          if (Array.isArray(list2) && list2[i]) {
+            Object.assign(list2[i], seriesStyle[i]);
+            $d('series').value = JSON.stringify(list2, null, 2);
+          }
+        } catch { /* JSON 暂时不合法时不改 */ }
+      };
+    });
+  }
+
+  const styleReset = $d('style-reset');
+  if (styleReset) {
+    styleReset.onclick = () => {
+      Object.keys(seriesStyle).forEach(k => delete seriesStyle[k]);
+      try {
+        const list2 = JSON.parse($d('series').value);
+        if (Array.isArray(list2)) {
+          list2.forEach(o => ['color', 'linestyle', 'marker', 'line_width',
+                              'marker_size', 'alpha'].forEach(k => delete o[k]));
+          $d('series').value = JSON.stringify(list2, null, 2);
+        }
+      } catch { /* 忽略 */ }
+      draw();
+    };
+  }
+
   function buildSpec() {
     const chart = $d('chart').value;
     const spec = {
@@ -1210,6 +1595,19 @@ async function screenDiy(root) {
     const labels = ($d('labels').value || '').split(/[,，]/).map(x => x.trim())
       .filter(Boolean);
     if (labels.length) spec.labels = labels;
+
+    // 轴与刻度的微调。空值不传 —— 后端把"没给"当"不改"。
+    const AXIS_KEYS = ['title_size', 'label_size', 'tick_size', 'legend_size',
+                       'grid_alpha', 'xlim_min', 'xlim_max', 'ylim_min',
+                       'ylim_max', 'xtick_rot'];
+    AXIS_KEYS.forEach(k => {
+      const raw = ($d(k.replace(/_/g, '-')).value || '').trim();
+      if (raw === '') return;
+      const n = Number(raw);
+      if (Number.isFinite(n)) spec[k] = n;
+    });
+    const loc = ($d('legend-loc').value || '').trim();
+    if (loc) spec.legend_loc = loc;
 
     const matrixTxt = $d('matrix').value.trim();
     if (matrixTxt) {
@@ -1296,8 +1694,15 @@ async function screenDiy(root) {
     st.multi = $d('multi').checked;
     $d('simple').hidden = st.multi;
     $d('advanced').hidden = !st.multi;
+    renderSeriesStyles();
     draw();
   };
+  // 手改 JSON 之后也要重排控件 —— 序列个数可能变了。
+  // 元素只在多序列模式下存在，所以要判空（单序列时它是隐藏的，
+  // 直接 addEventListener 会抛在 null 上，整页渲染就断了）。
+  const seriesTa = $d('series');
+  if (seriesTa) seriesTa.addEventListener('input', renderSeriesStyles);
+  renderSeriesStyles();
 
   $d('save').onclick = async () => {
     const err = $d('err');
@@ -1572,6 +1977,25 @@ async function screenFigures(root) {
     </div>
 
     <div class="card">
+      <div class="style-head">
+        <h2>${T.figures.style}</h2>
+        <span id="fig-style-count" class="muted style-active"></span>
+      </div>
+      <div class="muted small">${T.figures.styleHint}</div>
+      <div id="fig-style" class="style-grid"></div>
+      <div class="field">
+        <label class="inline">
+          <input type="checkbox" id="fig-style-keep">
+          ${T.figures.styleRemember}</label>
+        <div class="muted small">${T.figures.styleRememberHint}</div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-mini" id="fig-style-reset">${
+          T.figures.styleReset}</button>
+      </div>
+    </div>
+
+    <div class="card">
       <h2>${T.figures.previewTitle}</h2>
       <div id="fig-out" class="muted small">—</div>
     </div>
@@ -1664,6 +2088,114 @@ async function screenFigures(root) {
   };
   root.querySelector('#fig-sample').onclick = () => fillSample(state.current);
 
+  // ---------------------------------------------------------- 外观微调
+  // 这一块是为"生图工作台灵活度不够、不好微调"加的。
+  //
+  // 实现方式是**渲染后统一施加**，不是改 38 个模板：模板画完自己那张图，
+  // 覆盖挂在最后一环。改一处，全部模板（含以后新加的）都受益。
+  // 配色是唯一的例外 —— 线的颜色在 plot() 那一刻就定死了，
+  // 事后拿不到可靠信息，所以那个旋钮走模板自己的 palette。
+  const styleBox = root.querySelector('#fig-style');
+  const keepBox = root.querySelector('#fig-style-keep');
+  const styleCount = root.querySelector('#fig-style-count');
+  const KEEP_KEY = 'mcmtools.figstyle';
+
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const toNum = (v) => (v === '' || v == null) ? null : (Number(v) || Number(v) === 0 ? Number(v) : null);
+
+  /** 面板上的旋钮定义。数值型留空 = 不改。 */
+  const STYLE_FIELDS = [
+    { k: 'width_in',   label: T.diy.width,      ph: '6.4',  step: '0.1' },
+    { k: 'height_in',  label: T.diy.height,     ph: '4.0',  step: '0.1' },
+    // PDF 是矢量，DPI 只影响位图导出 —— 标签写明，免得调了没反应以为坏了
+    { k: 'dpi',        label: '位图 DPI',       ph: '300',  step: '1' },
+    { k: 'line_width', label: '线宽',            ph: '1.9',  step: '0.1' },
+    { k: 'marker_size',label: '标记大小',        ph: '5',    step: '0.5' },
+    { k: 'font_size',  label: '字号',            ph: '10',   step: '0.5' },
+    { k: 'title_size', label: T.diy.titleSize,  ph: '11',   step: '0.5' },
+    { k: 'label_size', label: T.diy.labelSize,  ph: '9.5',  step: '0.5' },
+    { k: 'legend_size',label: T.diy.legendSize, ph: '8',    step: '0.5' },
+    { k: 'grid_alpha', label: '网格透明度',      ph: '0.28', step: '0.05' },
+    { k: 'alpha',      label: '图形透明度',      ph: '1.0',  step: '0.05' },
+    { k: 'xlim_min',   label: T.diy.axisSection + ' X 下限', ph: '自动', step: 'any' },
+    { k: 'xlim_max',   label: T.diy.axisSection + ' X 上限', ph: '自动', step: 'any' },
+    { k: 'ylim_min',   label: T.diy.axisSection + ' Y 下限', ph: '自动', step: 'any' },
+    { k: 'ylim_max',   label: T.diy.axisSection + ' Y 上限', ph: '自动', step: 'any' },
+    { k: 'xtick_rot',  label: '横轴刻度旋转',    ph: '0',    step: '15' },
+  ];
+  const LEGEND_LOCS = ['', 'best', 'upper right', 'upper left', 'lower right',
+                       'lower left', 'upper center', 'lower center',
+                       'center right', 'center left', 'outside right'];
+
+  // 存过的设置：换模板、下次打开都沿用。存 localStorage 而不是项目里 ——
+  // 这是"我这台机器上的观感"，不是论文的一部分，不该进版本库。
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(KEEP_KEY) || '{}') || {}; }
+  catch { saved = {}; }
+  let remember = !!saved.__keep;
+  keepBox.checked = remember;
+
+  styleBox.innerHTML = STYLE_FIELDS.map(f => `
+    <div class="field"><label>${esc(f.label)}</label>
+      <input class="input" data-style="${f.k}" type="number" step="${f.step}"
+        placeholder="${esc(f.ph)}" value="${
+          saved[f.k] != null ? esc(String(saved[f.k])) : ''}">
+    </div>`).join('') + `
+    <div class="field"><label>${T.diy.legendPos}</label>
+      <select class="input" data-style="legend_loc">
+        ${LEGEND_LOCS.map(v => `<option value="${esc(v)}"${
+          saved.legend_loc === v ? ' selected' : ''}>${
+          v === '' ? '不改' : esc(v)}</option>`).join('')}
+      </select></div>`;
+
+  /** 读出当前的覆盖值。空值不传 —— 后端把"没给"当"不覆盖"。 */
+  function readStyle() {
+    const out = {};
+    styleBox.querySelectorAll('[data-style]').forEach(el => {
+      const k = el.getAttribute('data-style');
+      const v = String(el.value || '').trim();
+      if (v === '') return;
+      if (k === 'legend_loc') { out[k] = v; return; }
+      const n = toNum(v);
+      if (n != null) out[k] = n;
+    });
+    return out;
+  }
+
+  function refreshStyleCount() {
+    const n = Object.keys(readStyle()).length;
+    styleCount.textContent = n ? T.figures.styleActive(n) : '';
+    if (remember) {
+      const keep = { ...readStyle(), __keep: true };
+      try { localStorage.setItem(KEEP_KEY, JSON.stringify(keep)); }
+      catch { /* 隐私模式下写不了，忽略 */ }
+    }
+  }
+
+  styleBox.addEventListener('input', refreshStyleCount);
+  styleBox.addEventListener('change', refreshStyleCount);
+  keepBox.onchange = () => {
+    remember = keepBox.checked;
+    try {
+      if (remember) {
+        localStorage.setItem(KEEP_KEY,
+          JSON.stringify({ ...readStyle(), __keep: true }));
+      } else {
+        localStorage.removeItem(KEEP_KEY);
+      }
+    } catch { /* 忽略 */ }
+    refreshStyleCount();
+  };
+  root.querySelector('#fig-style-reset').onclick = () => {
+    styleBox.querySelectorAll('[data-style]').forEach(el => {
+      el.value = el.tagName === 'SELECT' ? '' : '';
+    });
+    refreshStyleCount();
+    root.querySelector('#fig-run').click();
+  };
+  refreshStyleCount();
+
+
   root.querySelector('#fig-run').onclick = async () => {
     errEl.innerHTML = '';
     let data;
@@ -1675,7 +2207,12 @@ async function screenFigures(root) {
       return;
     }
     const isDrawio = drawioOnes.has(state.current);
-    const meta = { caption: root.querySelector('#fig-caption').value || '' };
+    // 外观覆盖随 meta 一起送给后端，由 mcmplot.apply_overrides 在模板
+    // 画完之后统一施加 —— 所以模板自己不需要知道这些旋钮存在。
+    const meta = {
+      caption: root.querySelector('#fig-caption').value || '',
+      ...(isDrawio ? {} : readStyle()),
+    };
     outEl.innerHTML = `<span class="muted">${T.figures.rendering}</span>`;
     try {
       const res = await fetch('/api/templates/' + state.current + '/preview', {
@@ -2175,7 +2712,14 @@ async function paintSettings(root) {
             `<div class="small mono">${esc(v.at)} ${esc(v.detail)}</div>`).join('')}
         </div>` : ''}
       </div>
-    </div>`;
+    </div>
+
+    <div id="paths-card"></div>`;
+
+  // 路径卡片是这次"打包后路径失效"的直接解法：把程序**实际在用**的
+  // 路径显示出来（数据来自 /api/system，也就是 root.py 本身），
+  // 而不是另算一份。这类问题的第一步永远是"程序认为模板在哪"。
+  await paintPaths(root.querySelector('#paths-card'));
 
   // 队伍号：印在摘要页上，比赛期间可能后补或改动。
   // 没有入口的话，用户只能去手工编辑 project.yaml。
@@ -2231,6 +2775,123 @@ async function paintSettings(root) {
       }
     });
   }
+}
+
+/** 安装与路径：程序装在哪、模板库在哪、用的哪个 Python。
+ *
+ * 这一块是为"打包成 app 之后模板没了"这个问题加的直接解法。
+ * 用户报这句话时，第一个要问的永远是"程序认为模板在哪"——
+ * 以前这个值在界面上任何地方都看不到，只能靠猜。
+ *
+ * 数据来自 /api/system，而它读的就是 root.py 里程序自己用的那套解析。
+ * 不另算一份：两份算法迟早不一致，那比不显示更糟。
+ */
+async function paintPaths(root) {
+  if (!root) return;
+  let d;
+  try {
+    d = await api('/api/system');
+  } catch (e) {
+    root.innerHTML = `<div class="card"><h2>${T.paths.title}</h2>
+      <div class="error-box small">${esc(e.message || e)}</div></div>`;
+    return;
+  }
+
+  const copyBtn = (v) =>
+    `<button class="btn-mini" data-copy="${esc(v || '')}">复制</button>`;
+
+  const perKind = Object.entries(d.templates_per_kind || {})
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${k} ${n}`).join(' · ');
+
+  const srcLabel = d.templates_source === 'bundled' ? T.paths.sourceBundled
+    : (String(d.templates_source).includes('Resources') ? T.paths.sourceBundle
+      : T.paths.sourceOverride);
+
+  root.innerHTML = `
+    <div class="card">
+      <h2>${T.paths.title}</h2>
+      <p class="muted small">${esc(T.paths.diagnose)}</p>
+
+      ${d.app_bundle ? `<div class="note-box small">${
+        esc(T.paths.fromApp(d.app_bundle))}</div>` : ''}
+      ${!d.templates_exists ? `<div class="error-box small">${
+        esc(T.paths.missingWarn)}</div>` : ''}
+      ${d.readonly ? `<div class="warn-box small">${
+        esc(T.paths.readonlyHint)}</div>` : ''}
+
+      <div class="path-list">
+        <div class="path-row">
+          <span class="path-label">${T.paths.repoRoot}</span>
+          <code class="path-value">${esc(d.repo_root)}</code>${copyBtn(d.repo_root)}
+        </div>
+        <div class="path-row">
+          <span class="path-label">${T.paths.templatesRoot}</span>
+          <code class="path-value">${esc(d.templates_root)}</code>${copyBtn(d.templates_root)}
+          <span class="pill ${d.templates_exists ? 'pill-muted' : 'pill-err'}">${
+            d.templates_exists ? esc(T.paths.count(d.templates_total)) : T.paths.missing}</span>
+        </div>
+        ${perKind ? `<div class="path-row">
+          <span class="path-label">分区</span>
+          <code class="path-value muted">${esc(perKind)}</code>
+          <span class="pill pill-muted">${esc(srcLabel)}</span>
+        </div>` : ''}
+        ${(d.templates_extra_roots || []).map(r => `<div class="path-row">
+          <span class="path-label">${T.paths.extraRoots}</span>
+          <code class="path-value">${esc(r.path)}</code>
+          <span class="pill pill-muted">${esc(T.paths.count(r.templates))}</span>
+        </div>`).join('')}
+        <div class="path-row">
+          <span class="path-label">${T.paths.userDir}</span>
+          <code class="path-value">${esc(d.user_templates_root)}</code>${copyBtn(d.user_templates_root)}
+        </div>
+        <div class="path-row">
+          <span class="path-label">${T.paths.webRoot}</span>
+          <code class="path-value">${esc(d.web_root)}</code>
+          <span class="pill ${d.web_exists ? 'pill-muted' : 'pill-err'}">${
+            d.web_exists ? T.paths.ok : T.paths.missing}</span>
+        </div>
+        <div class="path-row">
+          <span class="path-label">${T.paths.projectRoot}</span>
+          <code class="path-value">${esc(d.project_root)}</code>${copyBtn(d.project_root)}
+        </div>
+        <div class="path-row">
+          <span class="path-label">${T.paths.dataDir}</span>
+          <code class="path-value">${esc(d.data_dir)}</code>${copyBtn(d.data_dir)}
+        </div>
+        <div class="path-row">
+          <span class="path-label">${T.paths.python}</span>
+          <code class="path-value">${esc(d.python)} (${esc(d.python_version)})</code>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-mini" id="paths-refresh">${T.paths.refresh}</button>
+      </div>
+    </div>`;
+
+  root.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.onclick = async () => {
+      const text = btn.getAttribute('data-copy') || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        const old = btn.textContent;
+        btn.textContent = T.paths.copied;
+        setTimeout(() => { btn.textContent = old; }, 1200);
+      } catch {
+        // 剪贴板被拒时退回到选中文本 —— 手抄长路径很容易错一个字符
+        const el = btn.previousElementSibling;
+        if (el && window.getSelection) {
+          const r = document.createRange();
+          r.selectNodeContents(el);
+          window.getSelection().removeAllRanges();
+          window.getSelection().addRange(r);
+        }
+      }
+    };
+  });
+  const refreshBtn = root.querySelector('#paths-refresh');
+  if (refreshBtn) refreshBtn.onclick = () => paintPaths(root);
 }
 
 // ---------------------------------------------------------------- 弹窗
