@@ -442,8 +442,8 @@ class ExperimentRunner:
         fingerprint = script_fingerprint(self.store.root, entrypoint_rel)
 
         # 运行号在实验内**全局递增**，与 trial 序号无关。
-        # 早先用 f"RUN-{exp}-{i:03d}"，重跑实验时编号会重复，新一轮产物
-        # 直接倒进旧文件夹里（实测：跑三轮后每个文件夹里堆了 3 份产物）。
+        # 不能用 f"RUN-{exp}-{i:03d}"：重跑实验时编号会重复，新一轮产物
+        # 直接倒进旧文件夹里，跑三轮后每个文件夹里会堆 3 份产物。
         # 归档要可信，编号就必须只增不复用。
         base_seq = _next_seq(runstore, experiment_id)
 

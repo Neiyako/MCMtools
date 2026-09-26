@@ -1,6 +1,6 @@
 """Shared enums and base types for the MCMtools object model.
 
-Design rules established by the corpus analysis (see docs/mcmtools-architecture.md):
+Design rules established by the corpus analysis:
 
 1. Every enum has an ``UNKNOWN``/``NONE`` member where the corpus shows the modal
    paper does not supply the value. Measured: 64% of papers do not number

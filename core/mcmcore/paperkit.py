@@ -122,8 +122,8 @@ def build_sections(spine_kind: str = "general") -> List[Section]:
             # 骨架里写了 SectionKind 没有的 kind。**必须出声**：
             # 静默降级成 OTHER 的后果是这一节照常显示、照常排版，
             # 但它匹配不到任何正文骨架，用户只会看到一节空的，
-            # 完全不知道为什么。这是我自己踩过的坑（solution /
-            # scenario 当时并不存在）。
+            # 完全不知道为什么（solution / scenario 这两个 kind
+            # 并不是 SectionKind 的合法取值）。
             self_problems.append(
                 f"骨架 '{spine_kind}' 的章节 kind='{kind}' 不是合法的 "
                 f"SectionKind，已按 other 处理。合法取值见 schemas.SectionKind。"

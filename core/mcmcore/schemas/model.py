@@ -6,7 +6,7 @@
 历史说明（保留以免后来者困惑）：A Model is NOT `model.py`. The corpus shows
 2-4 named models per paper, each
 with symbols, equations, assumptions, parameters, typed coupling to siblings,
-and an explicit relationship to a baseline (docs/mcmtools-architecture.md §6).
+and an explicit relationship to a baseline.
 
 Every field that the modal paper does not supply is Optional or defaults to an
 UNKNOWN enum member. That is a measured decision, not laziness:

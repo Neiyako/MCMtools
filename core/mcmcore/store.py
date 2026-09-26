@@ -118,7 +118,7 @@ def _load_as(cls: Type[T], path: Path) -> T:
 class ProjectLayout:
     """Owns the on-disk paths of one competition attempt.
 
-    Layout (see docs/mcmtools-architecture.md §18)::
+    Layout::
 
         <root>/
           project.yaml

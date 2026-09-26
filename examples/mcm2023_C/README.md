@@ -69,4 +69,4 @@ Wordle 的结果分享格式让每个玩家都成了自愿的数据上报者。�
 ./core/mcm --dir <项目目录> validate           # 审计
 ```
 
-流程说明见 `docs/workbench-guide.md`。
+流程说明见仓库根目录的 `README.md`。

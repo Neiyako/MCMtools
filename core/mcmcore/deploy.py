@@ -44,7 +44,7 @@ OPTIONAL = [
 ]
 
 # 模板库的五个分区。少一个都说明拷贝不完整 ——
-# 我自己就踩过：rsync 排除规则写错，只拷过去 paper/，74 个模板变 7 个，
+# 排除规则写错时很容易只拷过去一部分：74 个模板变 7 个，
 # 而服务照常启动、照常响应，**不报任何错**。所以这里要数数。
 TEMPLATE_KINDS = ["figures", "models", "tables", "experiments", "paper", "code"]
 

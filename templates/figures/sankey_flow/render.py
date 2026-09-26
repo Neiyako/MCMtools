@@ -171,7 +171,7 @@ def render(data: Dict[str, Any], meta: Optional[Dict[str, Any]] = None):
     #     max_lv [ block_flow[lv] * unit + gap*(n_lv-1) ] = 1
     #     unit = (1 - max_lv[gap*(n_lv-1)]) / max_lv[block_flow[lv]]
     #
-    # 注意 gap 只能**减一次**。早先的写法把 gap 加进了分母又加进了
+    # 注意 gap 只能**减一次**。把 gap 加进分母又加进
     # 每层的 block，等于加了两遍，结果每层都超出量程 0.125 —— 节点条的
     # y 落在 [-0.125, 1.125]，上下各有一截被裁掉，而且因为裁掉的是
     # 边缘、主体还在，看缩略图不容易发现。

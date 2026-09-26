@@ -153,7 +153,7 @@ def render(data: Dict[str, Any], meta: Optional[Dict[str, Any]] = None):
     ax.tick_params(axis="x", pad=10)
 
     # 原始数值标在顶点旁：归一化会掩盖真实尺度，标数值是对它的补偿。
-    # 多个系列的分数接近时这些数字会重合（实测三个落在同一像素），
+    # 多个系列的分数接近时这些数字会重合（三个值可能落在同一像素），
     # 所以最后统一做一次避让。
     _value_anns = []
     for i in range(len(labels)):

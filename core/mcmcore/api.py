@@ -1027,7 +1027,7 @@ def create_app(project_root: Path) -> FastAPI:
     def delete_experiment(exp_id: str) -> Dict[str, Any]:
         st = store()
         # experiment_path() 返回的是**文件**路径（…/experiments/EXP-001/experiment.yaml），
-        # 不是目录。早先当成目录用，删除和查重都失效。
+        # 不是目录。当成目录用会让删除和查重都失效。
         f = st.layout.experiment_path(exp_id)
         if not f.is_file():
             raise HTTPException(404, f"没有实验 {exp_id}")

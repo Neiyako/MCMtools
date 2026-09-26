@@ -25,15 +25,13 @@ MCM = REPO / "core" / "mcm"
 # 只扫这些地方：都是直接展示给用户看的
 SCAN = [
     REPO / "README.md",
-    REPO / "docs" / "workbench-guide.md",
-    REPO / "docs" / "project-layout.md",
-    REPO / "docs" / "CONTRIBUTING.md",
+    REPO / "docs" / "DEPLOY.md",
+    REPO / "docs" / "molderread.md",
+    REPO / "docs" / "coderread.md",
+    REPO / "docs" / "writerread.md",
     REPO / "web" / "app.js",
     REPO / "web" / "strings.js",
 ]
-
-# 架构文档记录的是设计草案，其中标注"未实现"的不算承诺
-SKIP_FILES = {REPO / "docs" / "mcmtools-architecture.md"}
 
 # 已知的合法"非子命令"写法：mcm 本身、文件路径等
 IGNORE = {"mcm"}
@@ -55,7 +53,7 @@ def _scan_commands():
     pat = re.compile(r"\./core/mcm\s+([a-zA-Z][\w-]*)")
     hits = []
     for f in SCAN:
-        if f in SKIP_FILES or not f.is_file():
+        if not f.is_file():
             continue
         text = f.read_text(encoding="utf-8")
         for m in pat.finditer(text):

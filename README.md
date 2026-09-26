@@ -1,9 +1,9 @@
 # MCMtools
 
-数学建模竞赛（MCM/ICM）的生产工具链：**赛前用 AI 辅助开发，比赛期间全程本地离线运行。**
+数学建模竞赛（MCM/ICM）的生产工具链：**赛前用 AI 辅助准备，比赛期间全程本地离线运行。**
 
 比赛那几天不该依赖任何在线服务 —— 网络会断、额度会用完、服务会排队。
-所以核心功能（模板、生图、编译、审计）全部本地跑，不联网。
+所以模板、生图、编译、审计全部本地跑，不联网。
 
 ---
 
@@ -13,12 +13,10 @@
 git clone https://github.com/Neiyako/MCMtools.git
 cd MCMtools
 
-./start ~/Desktop/我的项目     # 指定项目目录（不存在会自动创建）
+./start ~/mcm/2026A          # 指定项目目录（不存在会自动创建）
 ```
 
 浏览器会自动打开面板。第一次运行会装几个 Python 包，终端里显示进度。
-
-常用参数：
 
 ```bash
 ./start                # 在当前目录启动
@@ -32,6 +30,10 @@ cd MCMtools
 **只要求系统里有 Python 3.9+**，不用预装别的。TeX Live 可选 ——
 没有它只是不能编译 PDF，审计、面板、出图都照常。
 
+> **项目目录不要放桌面。** macOS 会拒绝从 `.app` 双击启动时读取
+> `~/Desktop`、`~/Documents`、`~/Downloads` 下的文件（内核级权限限制）。
+> 从终端启动没事，双击 `.app` 就会读不到。放 `~/mcm/` 下最省事。
+
 ### 确认装好了
 
 ```bash
@@ -39,13 +41,25 @@ cd MCMtools
 ```
 
 ```
-[正常] 模板库完整  101 个（figures 38、models 17、…、code 16）
+[正常] 模板库完整  101 个（figures 38、models 17、tables 13、experiments 9、paper 8、code 16）
 [正常] 模板全部可加载  101 个
 
 结论：可以部署，一切就绪。
 ```
 
-有问题时退出码非 0 并给出具体修法。
+---
+
+## 三个人怎么分工
+
+这套工具按**三种角色**组织。你可能是其中一个人，也可能三个都做。
+
+| 角色 | 负责 | 看哪份 |
+|---|---|---|
+| **建模手** | 拆题、定义符号/公式/假设/参数 | [molderread.md](docs/molderread.md) |
+| **代码手** | 写 `run.py` 把模型跑出数字 | [coderread.md](docs/coderread.md) |
+| **论文手** | 写正文、出图表、控页数 | [writerread.md](docs/writerread.md) |
+
+三份指南都从**你要维护什么**讲起，不需要先读别的。
 
 ---
 
@@ -53,8 +67,8 @@ cd MCMtools
 
 不是"帮你写论文" —— 是**把论文变成一件有据可查的事**。
 
-比赛里最容易出的事故是：正文写"β = 0.31"，代码里跑出来是 0.313145，
-而两者之间没有任何机制保证一致。改了一次参数，忘了改正文，
+比赛里最容易出的事故是：正文写"β = 0.31"，代码跑出来是 0.313145，
+而两者之间没有任何机制保证一致。改了一次参数忘了改正文，
 交上去的论文自己打自己。
 
 MCMtools 的做法是让**每个数字只有一个来源**：
@@ -65,14 +79,14 @@ MCMtools 的做法是让**每个数字只有一个来源**：
                     └────── 审计：对不上就报错 ──────┘
 ```
 
-正文里写 `\numBetaFit{}`，编译时替换成真实值。改了参数重跑，
+正文里写 `\numScore{}`，编译时替换成真实值。改了参数重跑，
 正文自动跟着变，对不上的地方审计会报出来。
 
 ### 核心能力
 
 | 能力 | 说明 |
 |---|---|
-| **模板库** | 101 个模板：图表 38、模型 17、表格 13、实验 9、论文 8、代码 16 |
+| **模板库** | 101 个模板：图 38、模型 17、表 13、实验 9、论文 8、代码 16 |
 | **结果追踪** | 数字有唯一来源，正文引用宏，改一处全篇一致 |
 | **图表生成** | 一键出 PDF，中文字体已配好；另有自定图表工作台（27 种图型） |
 | **论文编译** | LaTeX 一条命令编译，含参考文献 |
@@ -88,19 +102,24 @@ MCMtools 的做法是让**每个数字只有一个来源**：
 ```
 templates/
 ├── figures/       38  时序、分布、热力、雷达、置信带、小提琴、排名变化…
-├── models/        17  ODE、优化、评价、仿真、网络…
+├── models/        17  ODE、优化、评价、仿真、网络、排队、预测…
 ├── tables/        13  三线表
-├── experiments/    9  实验协议
+├── experiments/    9  实验协议（敏感性、蒙特卡洛、交叉验证…）
 ├── paper/          8  论文结构、章节骨架、参考文献
-└── code/          16  可复制的 Python 代码骨架
+└── code/          16  可直接复制的 Python 代码骨架
 ```
 
-`code/` 里的每个 `snippet.py` **直接能跑**（内置模拟数据），
-改几处 TODO 就能换成你的数据。覆盖数据清洗、回归诊断、
-时间序列、ODE 求解、参数拟合、蒙特卡洛、敏感性分析、
-多目标优化、熵权 TOPSIS、AHP、元胞自动机、图论、聚类、排队论。
+`code/` 里每个 `snippet.py` **直接能跑**（内置模拟数据），
+开头写明"要改哪几行"。覆盖数据清洗、回归诊断、时间序列、ODE 求解、
+参数拟合、蒙特卡洛、敏感性分析、多目标 Pareto、熵权 TOPSIS、AHP、
+元胞自动机、图论、聚类、排队论。
 
-详见 [docs/template-library.md](docs/template-library.md)。
+看某个模板：
+
+```bash
+./core/mcm template list                    # 列出全部
+./core/mcm template show fig.timeseries     # 看一个
+```
 
 ---
 
@@ -109,72 +128,39 @@ templates/
 | 页面 | 干什么 |
 |---|---|
 | 总览 | 当前阶段、待办、阻塞项 |
-| 数据 | 数据集与字段 |
-| 数学内容 | 符号、公式、假设 —— **可直接增删改** |
-| 参数 | 参数表 —— **可直接增删改**，标注来源 |
-| 实验 | 实验协议与运行 |
-| 生图工作台 | 从模板一键出图 |
-| 自定图表 | 27 种图型自己拼，可存成模板 |
-| 参考文献 | **粘贴 BibTeX 导入**，自动核对正文引用 |
+| 选题 | 登记候选题目、锁定 |
+| 数据 | 导入 CSV/TSV，自动识别列类型与缺失值 |
+| 数学内容 | 符号、公式、假设、目标与约束 |
+| 参数 | 参数表，标注来源 |
+| 实验 | 建实验协议、跑实验 |
+| 运行记录 | 每次运行的完整归档 |
+| 生图工作台 | 从 38 个模板一键出图 |
+| 自定图表 | 27 种图型自己拼 |
+| 表格 | 从模板生成三线表 |
+| 参考文献 | 粘贴 BibTeX 导入，自动核对引用 |
 | 结果 | 结果原子（数字的唯一来源） |
 | 论文 | 章节大纲与编译 |
 | 审计 | 检查报告 |
-
----
-
-## 文档
-
-| 想了解 | 看 |
-|---|---|
-| **目录结构、什么能删** | [docs/project-layout.md](docs/project-layout.md) |
-| **从零到交论文的完整操作** | [docs/usage-guide.md](docs/usage-guide.md) |
-| **东西叫什么、按什么范式、放哪里** | [docs/naming-and-layout.md](docs/naming-and-layout.md) |
-| 完整流程走一遍 | [docs/workbench-guide.md](docs/workbench-guide.md) |
-| 部署到另一台机器 | [docs/DEPLOY.md](docs/DEPLOY.md) |
-| 模板怎么用 | [docs/template-library.md](docs/template-library.md) |
-| 面板怎么改参数、做图 | [docs/panel-editing.md](docs/panel-editing.md) |
-| 架构与设计取舍 | [docs/mcmtools-architecture.md](docs/mcmtools-architecture.md) |
-| **改代码 / 打补丁 / 排查故障** | [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) |
-| 界面用词规范 | [docs/zh-terminology.md](docs/zh-terminology.md) |
-| 各层实现细节（core/compiler/runner/api/panel） | [docs/phase1-core.md](docs/phase1-core.md) 等五份 |
+| 设置 | 队伍号、运行模式、解锁题目 |
 
 ---
 
 ## 命令行
 
 ```bash
-./core/mcm --dir ~/我的项目 status           # 项目状态
-./core/mcm --dir ~/我的项目 validate         # 审计
-./core/mcm --dir ~/我的项目 exp run EXP-001  # 跑实验
-./core/mcm --dir ~/我的项目 paper build      # 编译论文
-./core/mcm template list                     # 列出模板
-./core/mcm deploy                            # 部署自检
-./core/mcm doctor                            # 环境检查
-./core/mcm report --out diag.txt             # 诊断报告（报 bug 时附上）
-./core/mcm --version                         # 版本 + git 提交号
+./core/mcm --dir ~/mcm/2026A status           # 项目状态
+./core/mcm --dir ~/mcm/2026A overview         # 状态 + 待处理问题
+./core/mcm --dir ~/mcm/2026A validate         # 审计
+./core/mcm --dir ~/mcm/2026A exp run EXP-001  # 跑实验
+./core/mcm --dir ~/mcm/2026A result list      # 结果原子
+./core/mcm --dir ~/mcm/2026A paper build      # 编译论文
+
+./core/mcm template list                      # 列出模板
+./core/mcm deploy                             # 部署自检
+./core/mcm doctor                             # 环境检查
+./core/mcm report --out diag.txt              # 诊断报告（报 bug 时附上）
+./core/mcm --version                          # 版本 + git 提交号
 ```
-
----
-
-## 部署前自检
-
-拷贝给别人之前，跑一下：
-
-```bash
-./core/mcm deploy
-```
-
-```
-[正常] 模板库完整  101 个（figures 38、models 17、…、code 16）
-[正常] 模板全部可加载  101 个
-
-结论：可以部署，一切就绪。
-```
-
-**为什么需要它**：拷贝过程本身最容易出问题。漏拷一个
-`templates/figures/`，模板会从 101 个变成 63 个 —— 而服务照常启动、
-接口照常响应、**全程不报任何错**，用户要到想画图时才发现。
-自检会数模板个数，就是防这个。
 
 ---
 
@@ -191,14 +177,20 @@ MCMtools/              软件本体
 ├── docs/              文档
 └── examples/          示例
 
-~/我的项目/             项目目录（你自己定位置）
-├── project.yaml
-├── results/           结果原子
-├── figures/  tables/  paper/
-└── build/             编译产物
+~/mcm/2026A/           项目目录（你自己定位置）
+├── project.yaml       阶段、锁定题目、队伍号
+├── problems/          候选题目
+├── data/  datasets/   原始数据 + 登记信息
+├── math/  params/     符号公式假设 + 参数来源
+├── experiments/       实验协议 + 你的 run.py
+├── runs/  results/    运行归档 + 结果原子
+├── figures/  tables/  图表
+├── paper/             正文
+├── build/  export/    编译产物 + 交付包
 ```
 
-详见 [docs/project-layout.md](docs/project-layout.md)。
+**升级工具直接 `git pull`，不会碰到你的论文。**
+只有 `data/` 和 `paper/` 里的正文需要你手写，其余由工具维护。
 
 ---
 
@@ -212,6 +204,20 @@ MCMtools/              软件本体
 
 ---
 
+## 文档
+
+就这 5 份：
+
+| 文档 | 看它 |
+|---|---|
+| **README**（本文） | 项目概览、快速开始、命令行 |
+| [DEPLOY.md](docs/DEPLOY.md) | 部署到另一台机器、给队友拷贝 |
+| [molderread.md](docs/molderread.md) | 建模手：拆题、符号、公式、假设、参数 |
+| [coderread.md](docs/coderread.md) | 代码手：写实验脚本、调试、结果追溯 |
+| [writerread.md](docs/writerread.md) | 论文手：写正文、出图、控页数、交付检查 |
+
+---
+
 ## 设计原则
 
 1. **比赛期间不依赖 AI、不依赖网络。** 核心功能全本地。
@@ -222,3 +228,9 @@ MCMtools/              软件本体
    所以报错直接说"缺哪个输入、该怎么填"。
 5. **中文优先。** 字体、术语、报错都是中文 —— 中文字体不含
    `²`、`−` 这类字形，直接画会变成豆腐块，所以有专门的处理层。
+
+---
+
+## 许可
+
+MIT License，见 [LICENSE](LICENSE)。

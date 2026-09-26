@@ -64,7 +64,7 @@ class FigureGenerator:
         """按模板渲染成矢量 PDF。
 
         模板是**动态发现**的：每个 templates/figures/<name>/render.py
-        自带 render(data, meta)。早先这里是一串 if template == 'fig.xxx'
+        自带 render(data, meta)。用一串 if template == 'fig.xxx'
         分支，加一个图模板就要改核心源码 —— 库再大也只能用已接线的几个。
         """
         out_dir = self.store.root / "figures"
@@ -100,7 +100,7 @@ class FigureGenerator:
             pdf = result.get("pdf")
             if not pdf:
                 # 没有 drawio 命令行就要**自己画一张 PDF**：论文编译只认
-                # PDF。早先这里直接把 .drawio 当产出返回，编译器把它复制成
+                # PDF。直接把 .drawio 当产出返回的话，编译器会把它复制成
                 # FIG-005.pdf，里面其实是 XML —— LaTeX 报
                 # "reading PDF image failed"，而且文件确实存在，
                 # 排查时会以为是图内容的问题，其实是格式不对。
@@ -312,7 +312,7 @@ class FigureGenerator:
         runs_root = self.store.root / "runs"
         if not runs_root.is_dir():
             # 没有 runs/ 不代表读不到数据：code/output 下的人写产物
-            # 也能绑。早先这里直接 return None，导致纯脚本产出的图
+            # 也能绑。这里直接 return None 会让纯脚本产出的图
             # 永远绑不上，报错还只说是"取不到数据"。
             return self._read_direct_column(b)
 

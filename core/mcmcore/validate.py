@@ -414,7 +414,7 @@ def check_artifact(
             )
 
     # 序列绑定和字面绑定同样是"绑定"，只是绑的不是标量原子。
-    # 早先这里只看 bounds，导致所有曲线图都被报成"没有绑定"。
+    # 只看 bounds 会把所有曲线图都误报成"没有绑定"，这里要一起看。
     has_any_binding = bool(getattr(art, "bindings", [])) or bool(bounds)
     if not has_any_binding:
         report.warn(

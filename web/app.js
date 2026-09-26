@@ -869,7 +869,7 @@ async function paintExperiments(root) {
     </div>`;
   // 先把「运行」按钮接上，再装新建表单。
   // 新建表单要异步拉模板列表，万一失败，不能连累已有实验的运行按钮 ——
-  // 实测就是这样：表单抛错，运行按钮全成了摆设。
+  // 表单抛错时，运行按钮会全变成摆设。
   root.querySelectorAll('[data-run]').forEach(b => b.onclick = async () => {
     const id = b.getAttribute('data-run');
     b.disabled = true; b.textContent = T.experiments.running;
@@ -955,7 +955,7 @@ async function wireExperimentForm(root) {
   // box 必须**在 await 之后**再取。提前取会拿到一个随后被
   // innerHTML 换掉的游离节点：里面的 .vary-row 用户看不见，
   // 用户看得见的那份又读不到，于是「填了变动参数却只跑一次」。
-  // 实测就是这个问题，而且只在空项目上出现（非空分支不重渲染）。
+  // 这会导致变动参数读不出来，而且只在空项目上出现（非空分支不重渲染）。
   let box = root.querySelector('#exp-varies');
   // 套模板是新手最快的路：模板带了默认值和输入说明。
   // 拉不到就退回空选项，不影响手工填写。
@@ -1007,7 +1007,7 @@ async function wireExperimentForm(root) {
     root.querySelector('#exp-msg').hidden = true;
     // readFields 必须在 try 里：它是 async handler，抛出去会变成
     // 未处理的 Promise 拒绝 —— 界面上什么都不显示，用户只看到
-    // "点了没反应"。实测就是这样，查了很久。
+    // "点了没反应"，界面毫无提示。
     let v;
     try {
       v = readFields(fieldList);
@@ -1521,7 +1521,7 @@ async function screenFigures(root) {
 
   // 示例数据不再写死在这里。模板到 28 个之后，手写的 12 份会让
   // 剩下 16 个点"填入示例数据"只得到 {} —— 用户面对空文本框，
-  // 既不知道要填哪些键，也不知道形状。实测里这就是最直接的抱怨。
+  // 既不知道要填哪些键，也不知道形状。这是最直接的抱怨。
   // 现在由 /api/templates/<id> 按模板声明生成，新模板自动就有。
   const sampleCache = {};
   async function sampleOf(tid) {
@@ -1589,7 +1589,7 @@ async function screenFigures(root) {
   // 用户想找"画分布的图"时根本不知道该输什么。
   //
   // 所以搜索**发给服务端**：中文→英文关键词的映射表在注册表里，
-  // 前端只负责传词和显示结果。曾经在前端做过一版本地过滤，结果是
+  // 前端只负责传词和显示结果。在前端做本地过滤的话，结果是
   // 搜中文永远零命中 —— 因为服务端返回的字段里一个中文字都没有。
   let searchSeq = 0;
   async function applyFilter(q) {
@@ -2243,7 +2243,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').
 
 // -- 通用编辑弹窗 -----------------------------------------------------------
 // 面板原来只有"看"没有"改"：数学内容和参数两页全是只读表格，
-// 想改一个符号释义得去翻 math/math.yaml。这是实测里最直接的抱怨。
+// 想改一个符号释义得去翻 math/math.yaml。这是最直接的抱怨。
 //
 // 这里把"改一个记录"做成通用件：给字段定义，弹窗负责取值、校验、
 // 提交、报错。各页只要声明自己的字段即可，不用各写一套表单。

@@ -219,7 +219,7 @@ def unwrap_literals(text: str) -> str:
     import re
 
     # 两种写法都要认：\lit{..} 和 \\lit{..}。
-    # 后者是历史遗留 —— 早先某次批量替换把反斜杠转义重了，
+    # 后者是历史遗留 —— 某次批量替换把反斜杠转义重了，
     # 结果 \lit 被当成"未定义命令 \ + 文字 lit"，编译报错信息
     # 还指向别处，很难查。这里一次性兼容掉。
     out = re.sub(r"\\\\lit\{([^}]*)\}", r"\1", text or "")
@@ -231,7 +231,7 @@ def unwrap_literals(text: str) -> str:
 def repair_split_macros(text: str) -> str:
     r"""修被换行劈开的宏引用。
 
-    病灶：早先某次批量编辑把 ``\numBeta{}`` 的反斜杠吃掉了，
+    病灶：某次批量编辑把 ``\numBeta{}`` 的反斜杠吃掉了，
     剩下的 ``n`` 又和后面的字面 ``\n`` 拼在一起，于是存档里出现
     ``"... is $\beta = \n\numBeta{}$"`` 这种形状。渲染时 LaTeX 报的
     是一句完全不指向病灶的 ``Undefined control sequence``，
